@@ -96,8 +96,6 @@ func In(input *config.InRequest) (*config.InResponse, error) {
 
 	return &config.InResponse{
 		Version: input.Version,
-		Metadata: []config.VersionMetadataField{
-			{Name: "name", Value: "value"},
-		},
+		Metadata: []config.VersionMetadataField{},
 	}, nil
 }
