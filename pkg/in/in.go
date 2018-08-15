@@ -7,40 +7,92 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"io/ioutil"
-	"log"
-	"net/url"
+	"github.com/concourse/go-concourse/concourse"
+	"strconv"
+	"encoding/json"
+	"crypto/tls"
+	"github.com/concourse/fly/eventstream"
 )
 
 func In(input *config.InRequest) (*config.InResponse, error) {
 	tr := &http.Transport{
 		MaxIdleConns:       10,
 		IdleConnTimeout:    30 * time.Second,
-		DisableCompression: true,
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 	}
 	client := &http.Client{Transport: tr}
 
-	concourseUrl, err := url.Parse(input.Source.ConcourseUrl)
+	concourse := concourse.NewClient(input.Source.ConcourseUrl, client, false)
+
+	buildId, err := strconv.Atoi(input.Version.BuildId)
 	if err != nil {
-		return &config.InResponse{}, fmt.Errorf("could not parse concourse_url '%s': '%s", input.Source.ConcourseUrl, err.Error())
+		return nil, fmt.Errorf("could not convert build id '%s' to an int: '%s", input.Version.BuildId, err.Error())
 	}
 
-	getBuildInfo(client, concourseUrl, input, "resources")
+	// the build
+	build, found, err := concourse.Build(input.Version.BuildId)
 	if err != nil {
-		return &config.InResponse{}, fmt.Errorf("could not fetch build resources: %s", err.Error())
+		return nil, fmt.Errorf("error while fetching build '%s': '%s", input.Version.BuildId, err.Error())
+	}
+	if !found {
+		return nil, fmt.Errorf("build '%s' not found: '%s", input.Version.BuildId, err.Error())
 	}
 
-	getBuildInfo(client, concourseUrl, input, "plan")
+	buildFile, err := os.Create(filepath.Join(input.WorkingDirectory, "build.json"))
+	defer buildFile.Close()
 	if err != nil {
-		return &config.InResponse{}, fmt.Errorf("could not fetch build plan: %s", err.Error())
+		return nil, err
 	}
 
-	getBuildInfo(client, concourseUrl, input, "events")
+	json.NewEncoder(buildFile).Encode(build)
+
+	// resources
+	resources, found, err := concourse.BuildResources(buildId)
 	if err != nil {
-		return &config.InResponse{}, fmt.Errorf("could not fetch build plan: %s", err.Error())
+		return nil, fmt.Errorf("error while fetching resources for build '%s': '%s", input.Version.BuildId, err.Error())
+	}
+	if !found {
+		return nil, fmt.Errorf("build '%s' not found while fetching resources: '%s", input.Version.BuildId, err.Error())
 	}
 
+	resFile, err := os.Create(filepath.Join(input.WorkingDirectory, "resources.json"))
+	defer resFile.Close()
+	if err != nil {
+		return nil, err
+	}
 
+	json.NewEncoder(resFile).Encode(resources)
+
+	// plan
+	plan, found, err := concourse.BuildPlan(buildId)
+	if err != nil {
+		return nil, fmt.Errorf("error while fetching plan for build '%s': '%s", input.Version.BuildId, err.Error())
+	}
+	if !found {
+		return nil, fmt.Errorf("build '%s' not found while fetching plan: '%s", input.Version.BuildId, err.Error())
+	}
+
+	planFile, err := os.Create(filepath.Join(input.WorkingDirectory, "plan.json"))
+	defer planFile.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	json.NewEncoder(planFile).Encode(plan)
+
+	// events
+	events, err := concourse.BuildEvents(input.Version.BuildId)
+	if err != nil {
+		return nil, fmt.Errorf("error while fetching events for build '%s': '%s", input.Version.BuildId, err.Error())
+	}
+
+	eventsFile, err := os.Create(filepath.Join(input.WorkingDirectory, "events.log"))
+	defer eventsFile.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	eventstream.Render(eventsFile, events)
 
 	return &config.InResponse{
 		Version: input.Version,
@@ -48,31 +100,4 @@ func In(input *config.InRequest) (*config.InResponse, error) {
 			{Name: "name", Value: "value"},
 		},
 	}, nil
-}
-
-func getBuildInfo(client *http.Client, concourseUrl *url.URL, input *config.InRequest, subpath string) error {
-	path := fmt.Sprintf("/api/v1/builds/%s/%s", input.Version.BuildId, subpath)
-
-	concourseUrl.Path = path
-	log.Printf("fetching %s", concourseUrl.String())
-	response, err := client.Get(concourseUrl.String())
-	if err != nil {
-		return err
-	}
-
-	filename := fmt.Sprintf("%s.json", subpath)
-	resFile, err := os.Create(filepath.Join(input.WorkingDirectory, filename))
-	defer resFile.Close()
-	if err != nil {
-		return err
-	}
-
-	respBytes, err := ioutil.ReadAll(response.Body)
-	if err != nil {
-		return err
-	}
-
-	resFile.Write(respBytes)
-
-	return nil
 }
