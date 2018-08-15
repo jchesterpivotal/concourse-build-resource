@@ -4,41 +4,66 @@ import (
 	"github.com/jchesterpivotal/concourse-build-resource/pkg/config"
 	"net/http"
 	"time"
-	"encoding/json"
 	"fmt"
+	gc "github.com/concourse/go-concourse/concourse"
+	"crypto/tls"
+	"strconv"
 )
 
 type builds []map[string]string
 
 func Check(input *config.CheckRequest) (*config.CheckResponse, error) {
 	tr := &http.Transport{
-		MaxIdleConns:       10,
-		IdleConnTimeout:    30 * time.Second,
-		DisableCompression: true,
+		MaxIdleConns:    10,
+		IdleConnTimeout: 30 * time.Second,
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 	}
 	client := &http.Client{Transport: tr}
+	concourse := gc.NewClient(input.Source.ConcourseUrl, client, false)
 
-	listBuildsUrl := fmt.Sprintf(
-		"%s/api/v1/teams/%s/pipelines/%s/jobs/%s/builds",
-		input.Source.ConcourseUrl,
-		input.Source.Team,
-		input.Source.Pipeline,
-		input.Source.Job,
-	)
+	team := concourse.Team(input.Source.Team)
 
-	listBuildsResponse, err := client.Get(listBuildsUrl)
-	if err != nil {
-		return nil, err
-	}
-	var listBuilds builds
-	json.NewDecoder(listBuildsResponse.Body).Decode(listBuilds)
+	if input.Version.BuildId == "" {
+		// first run
+		builds, _, found, err := team.JobBuilds(input.Source.Pipeline, input.Source.Job, gc.Page{Limit: 1})
+		if err != nil {
+			return nil, fmt.Errorf("could not retrieve builds for '%s/%s: %s", input.Source.Pipeline, input.Source.Job, err.Error())
+		}
+		if !found {
+			return nil, fmt.Errorf("could not find any builds for '%s/%s", input.Source.Pipeline, input.Source.Job)
+		}
 
-	newBuilds := make(config.CheckResponse, 0)
-	for _, b := range listBuilds {
-		if b["id"] > input.Version.BuildId {
-			newBuilds = append(newBuilds, config.Version{BuildId: b["id"]})
+		buildId := strconv.Itoa( builds[0].ID)
+		return &config.CheckResponse{
+			config.Version{BuildId:buildId},
+		}, nil
+	} else {
+		buildId, err := strconv.Atoi(input.Version.BuildId)
+		if err != nil {
+			return nil, fmt.Errorf("could not convert build id '%s' to an int: '%s", input.Version.BuildId, err.Error())
+		}
+
+		builds, _, found, err := team.JobBuilds(input.Source.Pipeline, input.Source.Job, gc.Page{})
+		if err != nil {
+			return nil, fmt.Errorf("could not retrieve builds for '%s/%s: %s", input.Source.Pipeline, input.Source.Job, err.Error())
+		}
+		if !found {
+			return nil, fmt.Errorf("could not find any builds for '%s/%s", input.Source.Pipeline, input.Source.Job)
+		}
+
+		if input.Version.BuildId != "" {
+			newBuilds := make(config.CheckResponse, 0)
+
+			for _, b := range builds {
+				if b.ID > buildId {
+					newBuildId := strconv.Itoa(b.ID)
+					newBuilds = append(newBuilds, config.Version{BuildId: newBuildId})
+				}
+			}
+			return &newBuilds, nil
 		}
 	}
 
-	return &newBuilds, nil
+
+	return &config.CheckResponse{}, nil
 }

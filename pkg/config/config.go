@@ -32,10 +32,7 @@ type InResponse struct {
 
 type CheckRequest struct {
 	Source  Source  `json:"source"`
-	Version Version `json:"version"`
+	Version Version `json:"version,omitempty"`
 }
 
-type CheckResponse struct {
-	Version  Version                `json:"version"`
-	Metadata []VersionMetadataField `json:"metadata"`
-}
+type CheckResponse []Version
