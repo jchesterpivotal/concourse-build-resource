@@ -29,3 +29,81 @@ Will produce 4 files:
 ## out
 
 No-op.
+
+## Example
+
+```yaml
+resource_types:
+- name: concourse-build
+  type: docker-image
+  source:
+    repository: gcr.io/cf-elafros-dog/concourse-build-resource
+
+resources:
+- name: builds
+  type: concourse-build
+  source:
+    concourse_url: https://concourse.example.com
+    team: main
+    pipeline: example-pipeline
+    job: some-job-you-are-interested-in
+    
+jobs:
+# ....
+
+- name: some-job-you-are-interested-in
+  public: true # required or it won't work
+  plan:
+  # ... whatever it is
+
+- name: react-after-build
+  public: true
+  plan:
+    - get: builds
+      trigger: true
+      version: every
+    - task: echo-build
+      config:
+        platform: linux
+        inputs:
+        - name: builds
+        image_resource:
+          type: docker-image
+          source: {repository: busybox}
+        run:
+          path: cat
+          args: ['builds/build.json']
+    - task: echo-resources
+      config:
+        platform: linux
+        inputs:
+        - name: builds
+        image_resource:
+          type: docker-image
+          source: {repository: busybox}
+        run:
+          path: cat
+          args: ['builds/resources.json']
+    - task: echo-plan
+      config:
+        platform: linux
+        inputs:
+        - name: builds
+        image_resource:
+          type: docker-image
+          source: {repository: busybox}
+        run:
+          path: cat
+          args: ['builds/plan.json']
+    - task: echo-log
+      config:
+        platform: linux
+        inputs:
+        - name: builds
+        image_resource:
+          type: docker-image
+          source: {repository: busybox}
+        run:
+          path: cat
+          args: ['builds/events.log']
+```
