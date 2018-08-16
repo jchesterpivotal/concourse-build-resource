@@ -12,22 +12,22 @@ import (
 func Show(filename string) {
 	path := filepath.Join("build", filename)
 
-	planFile, err := os.Open(path)
+	jsonFile, err := os.Open(path)
 	if err != nil {
 		log.Fatalf("could not open %s: %s", path, err.Error())
 	}
 
-	var plan map[string]interface{}
-	err = json.NewDecoder(planFile).Decode(&plan)
+	var data map[string]interface{}
+	err = json.NewDecoder(jsonFile).Decode(&data)
 	if err != nil {
 		log.Fatalf("could not parse %s: %s", path, err.Error())
 	}
 
 	formatter := colorjson.NewFormatter()
 	formatter.Indent = 2
-	prettified, err := formatter.Marshal(plan)
+	prettified, err := formatter.Marshal(data)
 	if err != nil {
-		log.Fatalf("could not prettify plan: %s", err.Error())
+		log.Fatalf("could not prettify %s: %s", path, err.Error())
 	}
 
 	fmt.Println(string(prettified))
