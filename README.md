@@ -30,16 +30,24 @@ Will produce 4 files:
 
 No-op.
 
-# build-pass-fail task
+# Utility tasks
 
-Included for convenience is `tasks/build-pass-fail`. As written, the task consumes the `build` folder output from the 
-resource and itself passes or fails depending on the results of the build being watched.
+Some convenience tasks are included to help you make quick and easy use of the resource.
+
+The default input to the tasks is `build`, but you can use 
+[input mapping](https://concourse-ci.org/task-step.html#input_mapping) to rename this input. See the example.
+
+## `build-pass-fail`
+
+This task consumes the `build` folder output from the resource and itself passes or fails depending 
+on the results of the build being watched.
 
 This is useful if you coordinate with downstream teams who consume your work: you can add a job to your pipeline
 which fails when the upstream fails.
 
-The default input is `build`, but you can use [input mapping](https://concourse-ci.org/task-step.html#input_mapping)
-to rename it. See the example.
+# `show-plan`
+
+Outputs a pretty-printed version of the `plan.json`.
 
 ## Example
 
@@ -58,66 +66,30 @@ resources:
     team: main
     pipeline: example-pipeline
     job: some-job-you-are-interested-in
-    
+
+- name: concourse-build-resource
+  type: git
+  source: {uri: https://github.com/jchesterpivotal/concourse-build-resource.git}
+
 jobs:
 # ....
 
 - name: some-job-you-are-interested-in
-  public: true # required or it won't work
+  public: true # required or the resource won't work
   plan:
   # ... whatever it is
 
 - name: react-after-build
   public: true
   plan:
+    - get: concourse-build-resource # for task YAML
     - get: build-from-elsewhere
       trigger: true
       version: every
     - task: pass-if-the-build-from-elsewhere-passed
       file: concourse-build-resource/tasks/build-pass-fail/task.yml
       input_mapping: {build: build-from-elsewhere} 
-    - task: echo-build
-      config:
-        platform: linux
-        inputs:
-        - name: build-from-elsewhere
-        image_resource:
-          type: docker-image
-          source: {repository: busybox}
-        run:
-          path: cat
-          args: ['build-from-elsewhere/build.json']
-    - task: echo-resources
-      config:
-        platform: linux
-        inputs:
-        - name: build-from-elsewhere
-        image_resource:
-          type: docker-image
-          source: {repository: busybox}
-        run:
-          path: cat
-          args: ['build-from-elsewhere/resources.json']
-    - task: echo-plan
-      config:
-        platform: linux
-        inputs:
-        - name: build-from-elsewhere
-        image_resource:
-          type: docker-image
-          source: {repository: busybox}
-        run:
-          path: cat
-          args: ['build-from-elsewhere/plan.json']
-    - task: echo-log
-      config:
-        platform: linux
-        inputs:
-        - name: build-from-elsewhere
-        image_resource:
-          type: docker-image
-          source: {repository: busybox}
-        run:
-          path: cat
-          args: ['build-from-elsewhere/events.log']
+    - task: show-plan
+      file: concourse-build-resource/tasks/show-plan/task.yml
+      input_mapping: {build: build-from-elsewhere}
 ```
