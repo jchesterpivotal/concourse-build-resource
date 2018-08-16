@@ -45,11 +45,11 @@ on the results of the build being watched.
 This is useful if you coordinate with downstream teams who consume your work: you can add a job to your pipeline
 which fails when the upstream fails.
 
-# `show-build`, `show-plan`, `show-resources`
+## `show-build`, `show-plan`, `show-resources`
 
 These tasks produce pretty-printed output of the build, plan and resource JSON files.
 
-# `show-logs`
+## `show-logs`
 
 Produces the logs from the build, including colouring (which is retained in Concourse's logs).
 
