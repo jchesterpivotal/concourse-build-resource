@@ -35,7 +35,7 @@ No-op.
 Some convenience tasks are included to help you make quick and easy use of the resource.
 
 The default input to the tasks is `build`, but you can use 
-[input mapping](https://concourse-ci.org/task-step.html#input_mapping) to rename this input. See the example.
+[input mapping](https://concourse-ci.org/task-step.html#input_mapping) to rename this input.
 
 ## `build-pass-fail`
 
@@ -49,6 +49,12 @@ which fails when the upstream fails.
 
 These tasks produce pretty-printed output of the build, plan and resource JSON files.
 
+# `show-logs`
+
+Produces the logs from the build, including colouring (which is retained in Concourse's logs).
+
+To avoid confusion, the log being printed is wrapped with "begin log" and "end log" lines.
+
 ## Example
 
 ```yaml
@@ -59,7 +65,7 @@ resource_types:
     repository: gcr.io/cf-elafros-dog/concourse-build-resource
 
 resources:
-- name: build-from-elsewhere
+- name: build
   type: concourse-build
   source:
     concourse_url: https://concourse.example.com
@@ -83,20 +89,17 @@ jobs:
   public: true
   plan:
     - get: concourse-build-resource # for task YAML
-    - get: build-from-elsewhere
+    - get: build
       trigger: true
       version: every
-    - task: pass-if-the-build-from-elsewhere-passed
+    - task: pass-if-the-build-passed
       file: concourse-build-resource/tasks/build-pass-fail/task.yml
-      input_mapping: {build: build-from-elsewhere} 
     - task: show-build
       file: concourse-build-resource/tasks/show-build/task.yml
-      input_mapping: {build: build-from-elsewhere}
     - task: show-plan
       file: concourse-build-resource/tasks/show-plan/task.yml
-      input_mapping: {build: build-from-elsewhere}
     - task: show-resources
       file: concourse-build-resource/tasks/show-resources/task.yml
-      input_mapping: {build: build-from-elsewhere}
-
+    - task: show-logs
+      file: concourse-build-resource/tasks/show-logs/task.yml
 ```
