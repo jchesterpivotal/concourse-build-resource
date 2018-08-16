@@ -45,9 +45,9 @@ on the results of the build being watched.
 This is useful if you coordinate with downstream teams who consume your work: you can add a job to your pipeline
 which fails when the upstream fails.
 
-# `show-plan`
+# `show-build`, `show-plan`, `show-resources`
 
-Outputs a pretty-printed version of the `plan.json`.
+These tasks produce pretty-printed output of the build, plan and resource JSON files.
 
 ## Example
 
@@ -89,7 +89,14 @@ jobs:
     - task: pass-if-the-build-from-elsewhere-passed
       file: concourse-build-resource/tasks/build-pass-fail/task.yml
       input_mapping: {build: build-from-elsewhere} 
+    - task: show-build
+      file: concourse-build-resource/tasks/show-build/task.yml
+      input_mapping: {build: build-from-elsewhere}
     - task: show-plan
       file: concourse-build-resource/tasks/show-plan/task.yml
       input_mapping: {build: build-from-elsewhere}
+    - task: show-resources
+      file: concourse-build-resource/tasks/show-resources/task.yml
+      input_mapping: {build: build-from-elsewhere}
+
 ```
