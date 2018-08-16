@@ -8,6 +8,7 @@ import (
 	gc "github.com/concourse/go-concourse/concourse"
 	"crypto/tls"
 	"strconv"
+	"github.com/concourse/atc"
 )
 
 func Check(input *config.CheckRequest) (*config.CheckResponse, error) {
@@ -53,7 +54,7 @@ func Check(input *config.CheckRequest) (*config.CheckResponse, error) {
 			newBuilds := make(config.CheckResponse, 0)
 
 			for _, b := range builds {
-				if b.ID > buildId {
+				if b.ID > buildId && b.Status != string(atc.StatusStarted) && b.Status != string(atc.StatusPending) {
 					newBuildId := strconv.Itoa(b.ID)
 					newBuilds = append(newBuilds, config.Version{BuildId: newBuildId})
 				}
@@ -61,7 +62,6 @@ func Check(input *config.CheckRequest) (*config.CheckResponse, error) {
 			return &newBuilds, nil
 		}
 	}
-
 
 	return &config.CheckResponse{}, nil
 }
