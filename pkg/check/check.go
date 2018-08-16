@@ -10,8 +10,6 @@ import (
 	"strconv"
 )
 
-type builds []map[string]string
-
 func Check(input *config.CheckRequest) (*config.CheckResponse, error) {
 	tr := &http.Transport{
 		MaxIdleConns:    10,
