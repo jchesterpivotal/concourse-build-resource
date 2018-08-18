@@ -28,11 +28,19 @@ func TestBuildPassFail(t *testing.T) {
 				gt.Expect(err).NotTo(gomega.HaveOccurred())
 			}
 
+			err = os.Mkdir("build", os.ModeDir|os.ModePerm)
+			if err != nil {
+				gt.Expect(err).NotTo(gomega.MatchError("build: file exists"))
+			}
+
 			cmd = exec.Command(compiledPath)
 		})
 
 		it.After(func() {
 			gexec.CleanupBuildArtifacts()
+
+			err = os.RemoveAll("build")
+			gt.Expect(err).NotTo(gomega.HaveOccurred())
 		})
 
 		when("a path to json file is not given", func() {
@@ -50,11 +58,6 @@ func TestBuildPassFail(t *testing.T) {
 
 			when("there is a build/build.json", func() {
 				it.Before(func() {
-					err = os.Mkdir("build", os.ModeDir|os.ModePerm)
-					if err != nil {
-						gt.Expect(err).NotTo(gomega.MatchError("build: file exists"))
-					}
-
 					_, err := os.Create(filepath.Join("build", "build.json"))
 					gt.Expect(err).NotTo(gomega.HaveOccurred())
 
@@ -85,18 +88,6 @@ func TestBuildPassFail(t *testing.T) {
 		})
 
 		when("there is a build/build.json", func() {
-			it.Before(func() {
-				err = os.Mkdir("build", os.ModeDir|os.ModePerm)
-				if err != nil {
-					gt.Expect(err).NotTo(gomega.MatchError("build: file exists"))
-				}
-			})
-
-			it.After(func() {
-				err = os.RemoveAll("build")
-				gt.Expect(err).NotTo(gomega.HaveOccurred())
-			})
-
 			when("build.json represents a successful build", func() {
 				it.Before(func() {
 					completed, err := os.Create(filepath.Join("build", "build.json"))
