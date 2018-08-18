@@ -10,7 +10,7 @@ import (
 func main() {
 	var filepath string
 	if len(os.Args) > 1 {
-		filepath = os.Args[1]
+		filepath = fmt.Sprintf("%s/build.json", os.Args[1])
 	} else {
 		filepath = "build/build.json"
 	}

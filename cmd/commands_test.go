@@ -43,18 +43,30 @@ func TestShowCommandsWhichPrettyPrintJson(t *testing.T) {
 			gt.Expect(err).NotTo(gomega.MatchError("build: file exists"))
 		}
 
+		err = os.Mkdir("valid", os.ModeDir|os.ModePerm)
+		if err != nil {
+			gt.Expect(err).NotTo(gomega.MatchError("valid: file exists"))
+		}
+
+		err = os.Mkdir("invalid", os.ModeDir|os.ModePerm)
+		if err != nil {
+			gt.Expect(err).NotTo(gomega.MatchError("invalid: file exists"))
+		}
+
 		spec.Run(t, cmdName, func(t *testing.T, when spec.G, it spec.S) {
 			gt = gomega.NewGomegaWithT(t) // scopes suck
+			jsonFileName := strings.TrimPrefix(cmdName, "show-")
+			jsonFileName = fmt.Sprintf("%s.json", jsonFileName)
 
 			when("there is a valid JSON file to pretty-print", func() {
 				it.Before(func() {
-					build, err := os.Create("build/valid.json")
+					jsonfile, err := os.Create(filepath.Join("valid", jsonFileName))
 					gt.Expect(err).NotTo(gomega.HaveOccurred())
 
-					_, err = build.WriteString(`{"test_json": true, "a_second_key": "a second value"}`)
+					_, err = jsonfile.WriteString(`{"test_json": true, "a_second_key": "a second value"}`)
 					gt.Expect(err).NotTo(gomega.HaveOccurred())
 
-					cmd := exec.Command(compiledPath, "build/valid.json")
+					cmd := exec.Command(compiledPath, filepath.Join("valid"))
 					session, err = gexec.Start(cmd, it.Out(), it.Out())
 					gt.Expect(err).NotTo(gomega.HaveOccurred())
 				})
@@ -65,15 +77,12 @@ func TestShowCommandsWhichPrettyPrintJson(t *testing.T) {
 				})
 			}, spec.Nested())
 
-			when("no path is provided", func() {
-				jsonFileName := strings.TrimPrefix(cmdName, "show-")
-				jsonFileName = fmt.Sprintf("%s.json", jsonFileName)
-
+			when("no resource name is provided", func() {
 				it(fmt.Sprintf("defaults to printing %s", jsonFileName), func() {
-					build, err := os.Create(filepath.Join("build", jsonFileName))
+					jsonfile, err := os.Create(filepath.Join("build", jsonFileName))
 					gt.Expect(err).NotTo(gomega.HaveOccurred())
 
-					_, err = build.WriteString(`{"test_json": true, "default_path": "yep"}`)
+					_, err = jsonfile.WriteString(`{"test_json": true, "default_path": "yep"}`)
 					gt.Expect(err).NotTo(gomega.HaveOccurred())
 
 					cmd := exec.Command(compiledPath)
@@ -89,23 +98,29 @@ func TestShowCommandsWhichPrettyPrintJson(t *testing.T) {
 
 			when("something goes wrong", func() {
 				it.Before(func() {
-					cmd := exec.Command(compiledPath, "there/is/no/such/path.json")
+					jsonfile, err := os.Create(filepath.Join("invalid", jsonFileName))
+					gt.Expect(err).NotTo(gomega.HaveOccurred())
+
+					_, err = jsonfile.WriteString(`this is {} not valid json`)
+					gt.Expect(err).NotTo(gomega.HaveOccurred())
+
+					cmd := exec.Command(compiledPath, filepath.Join("invalid"))
 					session, err = gexec.Start(cmd, it.Out(), it.Out())
 					gt.Expect(err).NotTo(gomega.HaveOccurred())
 				})
 
 				it("fails with an error", func() {
-					gt.Eventually(session.Err).Should(gbytes.Say("could not open there/is/no/such/path.json"))
+					gt.Eventually(session.Err).Should(gbytes.Say("could not parse invalid/"))
 					gt.Eventually(session).Should(gexec.Exit(1))
 				})
 			}, spec.Nested())
 		}, spec.Report(report.Terminal{}))
 
 		gexec.CleanupBuildArtifacts()
-		err = os.RemoveAll("build")
-		gt.Expect(err).NotTo(gomega.HaveOccurred())
+		gt.Expect(os.RemoveAll("build")).To(gomega.Succeed())
+		gt.Expect(os.RemoveAll("valid")).To(gomega.Succeed())
+		gt.Expect(os.RemoveAll("invalid")).To(gomega.Succeed())
 	}
-
 }
 
 func TestFileSystemTraversalsArePrevented(t *testing.T) {
@@ -145,6 +160,16 @@ func TestFileSystemTraversalsArePrevented(t *testing.T) {
 					gt.Eventually(session.Err).Should(gbytes.Say("malformed path"))
 				})
 			}, spec.Nested(), spec.Parallel())
+
+			when("any kind of argument other than a single-level directory name is given", func() {
+				it("rejects nested directory paths", func() {
+					cmd := exec.Command(compiledPath, "nested/directory/path")
+					session, err := gexec.Start(cmd, it.Out(), it.Out())
+					gt.Expect(err).NotTo(gomega.HaveOccurred())
+
+					gt.Eventually(session.Err).Should(gbytes.Say("malformed path"))
+				})
+			}, spec.Nested())
 		}, spec.Report(report.Terminal{}))
 
 		gexec.CleanupBuildArtifacts()

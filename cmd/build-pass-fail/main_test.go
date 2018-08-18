@@ -31,10 +31,26 @@ func TestBuildPassFail(t *testing.T) {
 		gt.Expect(err).NotTo(gomega.MatchError("build: file exists"))
 	}
 
+	err = os.Mkdir("successful", os.ModeDir|os.ModePerm)
+	if err != nil {
+		gt.Expect(err).NotTo(gomega.MatchError("successful: file exists"))
+	}
+
+	err = os.Mkdir("unsuccessful", os.ModeDir|os.ModePerm)
+	if err != nil {
+		gt.Expect(err).NotTo(gomega.MatchError("unsuccessful: file exists"))
+	}
+
+
+	err = os.Mkdir("invalid", os.ModeDir|os.ModePerm)
+	if err != nil {
+		gt.Expect(err).NotTo(gomega.MatchError("invalid: file exists"))
+	}
+
 	spec.Run(t, "build-pass-fail", func(t *testing.T, when spec.G, it spec.S) {
 		gt = gomega.NewGomegaWithT(t)
 
-		when("a path to json file is not given", func() {
+		when("a resource name is not given", func() {
 			when("there is no build/build.json", func() {
 				it.Before(func() {
 					cmd := exec.Command(compiledPath)
@@ -64,25 +80,10 @@ func TestBuildPassFail(t *testing.T) {
 			})
 		}, spec.Nested())
 
-		when("a path to a json file is given", func() {
-			it.Before(func() {
-				_, err := os.Create(filepath.Join("build", "a-passed-in-file.json"))
-				gt.Expect(err).NotTo(gomega.HaveOccurred())
-
-				cmd := exec.Command(compiledPath, "build/a-passed-in-file.json")
-				session, err = gexec.Start(cmd, it.Out(), it.Out())
-				gt.Expect(err).NotTo(gomega.HaveOccurred())
-			})
-
-			it("opens and attempts to parse the file", func() {
-				gt.Eventually(session.Err).Should(gbytes.Say("could not parse build/a-passed-in-file.json"))
-			})
-		}, spec.Nested())
-
-		when("there is a well-formed JSON file", func() {
+		when("a resource name is given and the directory contains a build.json file", func() {
 			when("the file represents a successful build", func() {
 				it.Before(func() {
-					completed, err := os.Create(filepath.Join("build", "successful-build.json"))
+					completed, err := os.Create(filepath.Join("successful", "build.json"))
 					gt.Expect(err).NotTo(gomega.HaveOccurred())
 
 					_, err = completed.WriteString(`{
@@ -94,7 +95,7 @@ func TestBuildPassFail(t *testing.T) {
 					}`)
 					gt.Expect(err).NotTo(gomega.HaveOccurred())
 
-					cmd := exec.Command(compiledPath, "build/successful-build.json")
+					cmd := exec.Command(compiledPath, "successful")
 					session, err = gexec.Start(cmd, it.Out(), it.Out())
 					gt.Expect(err).NotTo(gomega.HaveOccurred())
 				})
@@ -110,7 +111,7 @@ func TestBuildPassFail(t *testing.T) {
 
 			when("the file represents an unsuccessful build", func() {
 				it.Before(func() {
-					completed, err := os.Create(filepath.Join("build", "unsuccessful-build.json"))
+					completed, err := os.Create(filepath.Join("unsuccessful", "build.json"))
 					gt.Expect(err).NotTo(gomega.HaveOccurred())
 
 					_, err = completed.WriteString(`{
@@ -122,7 +123,7 @@ func TestBuildPassFail(t *testing.T) {
 					}`)
 					gt.Expect(err).NotTo(gomega.HaveOccurred())
 
-					cmd := exec.Command(compiledPath, "build/unsuccessful-build.json")
+					cmd := exec.Command(compiledPath, "unsuccessful")
 					session, err = gexec.Start(cmd, it.Out(), it.Out())
 					gt.Expect(err).NotTo(gomega.HaveOccurred())
 				})
@@ -135,29 +136,30 @@ func TestBuildPassFail(t *testing.T) {
 					gt.Eventually(session).Should(gexec.Exit(1))
 				})
 			})
-		}, spec.Nested(), spec.Parallel())
+		}, spec.Nested())
 
 		when("the JSON file is malformed", func() {
 			it.Before(func() {
-				malformed, err := os.Create(filepath.Join("build", "malformed-build.json"))
+				malformed, err := os.Create(filepath.Join("invalid", "build.json"))
 				gt.Expect(err).NotTo(gomega.HaveOccurred())
 
 				_, err = malformed.WriteString(`} {  [] {{ malformed JSON file: ""`)
 				gt.Expect(err).NotTo(gomega.HaveOccurred())
 
-				cmd := exec.Command(compiledPath, "build/malformed-build.json")
+				cmd := exec.Command(compiledPath, "invalid")
 				session, err = gexec.Start(cmd, it.Out(), it.Out())
 				gt.Expect(err).NotTo(gomega.HaveOccurred())
 			})
 
 			it("fails with an error", func() {
-				gt.Eventually(session.Err).Should(gbytes.Say("could not parse build/malformed-build.json"))
+				gt.Eventually(session.Err).Should(gbytes.Say("could not parse invalid/build.json"))
 			})
 		}, spec.Nested())
 	}, spec.Report(report.Terminal{}))
 
 	gexec.CleanupBuildArtifacts()
-
-	err = os.RemoveAll("build")
-	gt.Expect(err).NotTo(gomega.HaveOccurred())
+	gt.Expect(os.RemoveAll("build")).To(gomega.Succeed())
+	gt.Expect(os.RemoveAll("successful")).To(gomega.Succeed())
+	gt.Expect(os.RemoveAll("unsuccessful")).To(gomega.Succeed())
+	gt.Expect(os.RemoveAll("invalid")).To(gomega.Succeed())
 }

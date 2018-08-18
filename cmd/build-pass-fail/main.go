@@ -6,19 +6,24 @@ import (
 	"encoding/json"
 	"path/filepath"
 	"strings"
+	"fmt"
 )
 
 func main() {
 	var jsonpath, cleanpath string
 	if len(os.Args) > 1 {
 		jsonpath = os.Args[1]
-	} else {
-		jsonpath = "build/build.json"
-	}
 
-	cleanedpath := filepath.Clean(jsonpath)
-	if strings.HasPrefix(cleanedpath, "/") || strings.Contains(cleanedpath, "..") {
-		log.Fatalf("malformed path")
+		cleanpath = filepath.Clean(jsonpath)
+		if strings.HasPrefix(cleanpath, "/") ||
+			strings.Contains(cleanpath, "..") ||
+			strings.Count(cleanpath, "/") > 1 {
+			log.Fatalf("malformed path")
+		}
+
+		cleanpath = fmt.Sprintf("%s/build.json", cleanpath)
+	} else {
+		cleanpath = "build/build.json"
 	}
 
 	buildInfoFile, err := os.Open(cleanpath)
