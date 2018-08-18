@@ -14,32 +14,24 @@ import (
 )
 
 func TestBuildPassFail(t *testing.T) {
+	var compiledPath string
+	var err error
+	var session *gexec.Session
+	var gt *gomega.GomegaWithT
+
+	gt = gomega.NewGomegaWithT(t)
+
+	compiledPath, err = gexec.Build("github.com/jchesterpivotal/concourse-build-resource/cmd/build-pass-fail")
+	if err != nil {
+		gt.Expect(err).NotTo(gomega.HaveOccurred())
+	}
+
+	err = os.Mkdir("build", os.ModeDir|os.ModePerm)
+	if err != nil {
+		gt.Expect(err).NotTo(gomega.MatchError("build: file exists"))
+	}
+
 	spec.Run(t, "build-pass-fail", func(t *testing.T, when spec.G, it spec.S) {
-		var compiledPath string
-		var err error
-		var session *gexec.Session
-
-		gt := gomega.NewGomegaWithT(t)
-
-		it.Before(func() {
-			compiledPath, err = gexec.Build("github.com/jchesterpivotal/concourse-build-resource/cmd/build-pass-fail")
-			if err != nil {
-				gt.Expect(err).NotTo(gomega.HaveOccurred())
-			}
-
-			err = os.Mkdir("build", os.ModeDir|os.ModePerm)
-			if err != nil {
-				gt.Expect(err).NotTo(gomega.MatchError("build: file exists"))
-			}
-		})
-
-		it.After(func() {
-			gexec.CleanupBuildArtifacts()
-
-			err = os.RemoveAll("build")
-			gt.Expect(err).NotTo(gomega.HaveOccurred())
-		})
-
 		when("a path to json file is not given", func() {
 			when("there is no build/build.json", func() {
 				it.Before(func() {
@@ -161,4 +153,9 @@ func TestBuildPassFail(t *testing.T) {
 			})
 		})
 	}, spec.Report(report.Terminal{}))
+
+	gexec.CleanupBuildArtifacts()
+
+	err = os.RemoveAll("build")
+	gt.Expect(err).NotTo(gomega.HaveOccurred())
 }
