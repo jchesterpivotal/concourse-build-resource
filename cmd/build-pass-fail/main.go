@@ -7,9 +7,16 @@ import (
 )
 
 func main() {
-	buildInfoFile, err := os.Open("build/build.json")
+	var filepath string
+	if len(os.Args) > 1 {
+		filepath = os.Args[1]
+	} else {
+		filepath = "build/build.json"
+	}
+
+	buildInfoFile, err := os.Open(filepath)
 	if err != nil {
-		log.Fatalf("could not open build/build.json: %s", err.Error())
+		log.Fatalf("could not open %s: %s", filepath, err.Error())
 	}
 
 	var build struct {
@@ -22,7 +29,7 @@ func main() {
 
 	err = json.NewDecoder(buildInfoFile).Decode(&build)
 	if err != nil {
-		log.Fatalf("could not parse build/build.json: %s", err.Error())
+		log.Fatalf("could not parse %s: %s", filepath, err.Error())
 	}
 
 	if build.Status == "succeeded" {

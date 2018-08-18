@@ -35,15 +35,52 @@ func TestBuildPassFail(t *testing.T) {
 			gexec.CleanupBuildArtifacts()
 		})
 
-		when("there is no build/build.json", func() {
+		when("a path to json file is not given", func() {
+			when("there is no build/build.json", func() {
+				it.Before(func() {
+					session, err = gexec.Start(cmd, it.Out(), it.Out())
+					gt.Expect(err).NotTo(gomega.HaveOccurred())
+				})
+
+				it("fails with an error", func() {
+					gt.Eventually(session.Err).Should(gbytes.Say("could not open build/build.json"))
+					gt.Eventually(session).Should(gexec.Exit(1))
+				})
+			})
+
+			when("there is a build/build.json", func() {
+				it.Before(func() {
+					err = os.Mkdir("build", os.ModeDir|os.ModePerm)
+					if err != nil {
+						gt.Expect(err).NotTo(gomega.MatchError("build: file exists"))
+					}
+
+					_, err := os.Create(filepath.Join("build", "build.json"))
+					gt.Expect(err).NotTo(gomega.HaveOccurred())
+
+					cmd = exec.Command(compiledPath)
+					session, err = gexec.Start(cmd, it.Out(), it.Out())
+					gt.Expect(err).NotTo(gomega.HaveOccurred())
+				})
+
+				it("opens and attempts to parse build/build.json", func() {
+					gt.Eventually(session.Err).Should(gbytes.Say("could not parse build/build.json"))
+				})
+			})
+		})
+
+		when("a path to a json file is given", func() {
 			it.Before(func() {
+				_, err := os.Create(filepath.Join("build", "a-passed-in-file.json"))
+				gt.Expect(err).NotTo(gomega.HaveOccurred())
+
+				cmd = exec.Command(compiledPath, "build/a-passed-in-file.json")
 				session, err = gexec.Start(cmd, it.Out(), it.Out())
 				gt.Expect(err).NotTo(gomega.HaveOccurred())
 			})
 
-			it("fails with an error", func() {
-				gt.Eventually(session.Err).Should(gbytes.Say("could not open build/build.json"))
-				gt.Eventually(session).Should(gexec.Exit(1))
+			it("opens and attempts to parse the file", func() {
+				gt.Eventually(session.Err).Should(gbytes.Say("could not parse build/a-passed-in-file.json"))
 			})
 		})
 
