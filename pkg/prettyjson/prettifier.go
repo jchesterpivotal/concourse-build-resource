@@ -1,4 +1,4 @@
-package showjson
+package prettyjson
 
 import (
 	"os"
@@ -9,7 +9,7 @@ import (
 	"encoding/json"
 )
 
-func Show(filename string) {
+func Prettify(filename string) {
 	path := filepath.Join("build", filename)
 
 	jsonFile, err := os.Open(path)

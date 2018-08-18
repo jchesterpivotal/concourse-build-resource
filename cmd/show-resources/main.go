@@ -1,7 +1,7 @@
 package main
 
-import "github.com/jchesterpivotal/concourse-build-resource/pkg/showjson"
+import "github.com/jchesterpivotal/concourse-build-resource/pkg/prettyjson"
 
 func main() {
-	showjson.Show("resources.json")
+	prettyjson.Prettify("resources.json")
 }
