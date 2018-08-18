@@ -60,7 +60,7 @@ func TestBuildPassFail(t *testing.T) {
 					gt.Eventually(session.Err).Should(gbytes.Say("could not parse build/build.json"))
 				})
 			})
-		})
+		}, spec.Nested())
 
 		when("a path to a json file is given", func() {
 			it.Before(func() {
@@ -75,7 +75,7 @@ func TestBuildPassFail(t *testing.T) {
 			it("opens and attempts to parse the file", func() {
 				gt.Eventually(session.Err).Should(gbytes.Say("could not parse build/a-passed-in-file.json"))
 			})
-		})
+		}, spec.Nested())
 
 		when("there is a well-formed JSON file", func() {
 			when("the file represents a successful build", func() {
@@ -133,7 +133,7 @@ func TestBuildPassFail(t *testing.T) {
 					gt.Eventually(session).Should(gexec.Exit(1))
 				})
 			})
-		})
+		}, spec.Nested(), spec.Parallel())
 
 		when("the JSON file is malformed", func() {
 			it.Before(func() {
@@ -151,7 +151,7 @@ func TestBuildPassFail(t *testing.T) {
 			it("fails with an error", func() {
 				gt.Eventually(session.Err).Should(gbytes.Say("could not parse build/malformed-build.json"))
 			})
-		})
+		}, spec.Nested())
 	}, spec.Report(report.Terminal{}))
 
 	gexec.CleanupBuildArtifacts()
