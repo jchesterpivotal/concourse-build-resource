@@ -4,19 +4,26 @@ import (
 	"os"
 	"log"
 	"encoding/json"
+	"path/filepath"
+	"strings"
 )
 
 func main() {
-	var filepath string
+	var jsonpath, cleanpath string
 	if len(os.Args) > 1 {
-		filepath = os.Args[1]
+		jsonpath = os.Args[1]
 	} else {
-		filepath = "build/build.json"
+		jsonpath = "build/build.json"
 	}
 
-	buildInfoFile, err := os.Open(filepath)
+	cleanedpath := filepath.Clean(jsonpath)
+	if strings.HasPrefix(cleanedpath, "/") || strings.Contains(cleanedpath, "..") {
+		log.Fatalf("malformed path")
+	}
+
+	buildInfoFile, err := os.Open(cleanpath)
 	if err != nil {
-		log.Fatalf("could not open %s: %s", filepath, err.Error())
+		log.Fatalf("could not open %s: %s", cleanpath, err.Error())
 	}
 
 	var build struct {
@@ -29,7 +36,7 @@ func main() {
 
 	err = json.NewDecoder(buildInfoFile).Decode(&build)
 	if err != nil {
-		log.Fatalf("could not parse %s: %s", filepath, err.Error())
+		log.Fatalf("could not parse %s: %s", cleanpath, err.Error())
 	}
 
 	if build.Status == "succeeded" {

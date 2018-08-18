@@ -46,11 +46,11 @@ func TestPrettifier(t *testing.T) {
 			var err error
 
 			it.Before(func() {
-				_, err = prettyjson.Prettify("/no/such/file/exists.json")
+				_, err = prettyjson.Prettify("no/such/file/exists.json")
 			})
 
 			it("returns an error", func() {
-				gt.Expect(err.Error()).To(gomega.ContainSubstring("could not open /no/such/file/exists.json"))
+				gt.Expect(err.Error()).To(gomega.ContainSubstring("could not open no/such/file/exists.json"))
 			})
 		}, spec.Nested())
 

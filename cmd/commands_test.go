@@ -14,7 +14,7 @@ import (
 	"path/filepath"
 )
 
-// TestShowCommands tests the three commands which pretty-print JSON files output by the resource.
+// TestShowCommandsWhichPrettyPrintJson tests the three commands which pretty-print JSON files output by the resource.
 // They are: show-build, show-plan and show-resource.
 // They are actually thin wrappers around a module, so for convenience I consolidate their tests here.
 // Not included in this test is show-logs, since it does not involve pretty printing JSON.
@@ -106,4 +106,47 @@ func TestShowCommandsWhichPrettyPrintJson(t *testing.T) {
 		gt.Expect(err).NotTo(gomega.HaveOccurred())
 	}
 
+}
+
+func TestFileSystemTraversalsArePrevented(t *testing.T) {
+	commandsToTest := map[string]string{
+		"build-pass-fail": "github.com/jchesterpivotal/concourse-build-resource/cmd/build-pass-fail",
+		"show-build":      "github.com/jchesterpivotal/concourse-build-resource/cmd/show-build",
+		"show-plan":       "github.com/jchesterpivotal/concourse-build-resource/cmd/show-plan",
+		"show-resources":  "github.com/jchesterpivotal/concourse-build-resource/cmd/show-resources",
+		"show-logs":       "github.com/jchesterpivotal/concourse-build-resource/cmd/show-resources",
+	}
+
+	for cmdName, cmdPath := range commandsToTest {
+		gt := gomega.NewGomegaWithT(t)
+
+		compiledPath, err := gexec.Build(cmdPath)
+		if err != nil {
+			gt.Expect(err).NotTo(gomega.HaveOccurred())
+		}
+
+		spec.Run(t, cmdName, func(t *testing.T, when spec.G, it spec.S) {
+			gt := gomega.NewGomegaWithT(t)
+
+			when("given paths intended to perform directory traversal", func() {
+				it("rejects relative path traversals", func() {
+					cmd := exec.Command(compiledPath, "./.././../../sensitive/file")
+					session, err := gexec.Start(cmd, it.Out(), it.Out())
+					gt.Expect(err).NotTo(gomega.HaveOccurred())
+
+					gt.Eventually(session.Err).Should(gbytes.Say("malformed path"))
+				})
+
+				it("rejects absolute path traversals", func() {
+					cmd := exec.Command(compiledPath, "/absolute/path/to/sensitive/file")
+					session, err := gexec.Start(cmd, it.Out(), it.Out())
+					gt.Expect(err).NotTo(gomega.HaveOccurred())
+
+					gt.Eventually(session.Err).Should(gbytes.Say("malformed path"))
+				})
+			}, spec.Nested(), spec.Parallel())
+		}, spec.Report(report.Terminal{}))
+
+		gexec.CleanupBuildArtifacts()
+	}
 }
