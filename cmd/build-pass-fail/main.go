@@ -23,7 +23,6 @@ func main() {
 	err = json.NewDecoder(buildInfoFile).Decode(&build)
 	if err != nil {
 		log.Fatalf("could not parse build/build.json: %s", err.Error())
-
 	}
 
 	if build.Status == "succeeded" {
@@ -46,5 +45,4 @@ func main() {
 			build.Status,
 		)
 	}
-
 }
