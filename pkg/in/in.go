@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"github.com/concourse/go-concourse/concourse"
+	gc "github.com/concourse/go-concourse/concourse"
 	"strconv"
 	"encoding/json"
 	"crypto/tls"
@@ -22,7 +22,7 @@ func In(input *config.InRequest) (*config.InResponse, error) {
 	}
 	client := &http.Client{Transport: tr}
 
-	concourse := concourse.NewClient(input.Source.ConcourseUrl, client, false)
+	concourse := gc.NewClient(input.Source.ConcourseUrl, client, false)
 
 	buildId, err := strconv.Atoi(input.Version.BuildId)
 	if err != nil {
