@@ -66,16 +66,12 @@ func TestBuildPassFail(t *testing.T) {
 					gt.Expect(err).NotTo(gomega.HaveOccurred())
 
 					_, err = completed.WriteString(`{
-                        "api_url": "api_url",
-                        "end_time": 1111111111,
-                        "id": 222222,
-                        "job_name": "job_name",
-                        "name": "333",
-                        "pipeline_name": "pipeline_name",
-                        "start_time": 9999999999,
-                        "status": "succeeded",
-                        "team_name": "team_name"
-                    }`)
+						"status": "succeeded",
+						"team_name": "team_name",
+						"pipeline_name": "pipeline_name",
+						"job_name": "job_name",
+						"name": "333"
+					}`)
 					gt.Expect(err).NotTo(gomega.HaveOccurred())
 
 					session, err = gexec.Start(cmd, it.Out(), it.Out())
@@ -97,16 +93,12 @@ func TestBuildPassFail(t *testing.T) {
 					gt.Expect(err).NotTo(gomega.HaveOccurred())
 
 					_, err = completed.WriteString(`{
-                        "api_url": "api_url",
-                        "end_time": 1111111111,
-                        "id": 222222,
-                        "job_name": "job_name",
-                        "name": "333",
-                        "pipeline_name": "pipeline_name",
-                        "start_time": 9999999999,
-                        "status": "test status",
-                        "team_name": "team_name"
-                    }`)
+						"status": "unsuccessful status for test",
+						"team_name": "team_name",
+						"pipeline_name": "pipeline_name",
+						"job_name": "job_name",
+						"name": "333"
+					}`)
 					gt.Expect(err).NotTo(gomega.HaveOccurred())
 
 					session, err = gexec.Start(cmd, it.Out(), it.Out())
@@ -114,7 +106,7 @@ func TestBuildPassFail(t *testing.T) {
 				})
 
 				it("prints a failure message", func() {
-					gt.Eventually(session.Err).Should(gbytes.Say("Build /teams/team_name/pipelines/pipeline_name/jobs/job_name/builds/333 was unsuccessful & finished with status 'test status'"))
+					gt.Eventually(session.Err).Should(gbytes.Say("Build /teams/team_name/pipelines/pipeline_name/jobs/job_name/builds/333 was unsuccessful & finished with status 'unsuccessful status for test'"))
 				})
 
 				it("exits 1", func() {
