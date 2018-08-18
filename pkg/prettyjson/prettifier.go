@@ -2,33 +2,29 @@ package prettyjson
 
 import (
 	"os"
-	"log"
 	"github.com/TylerBrock/colorjson"
-	"fmt"
-	"path/filepath"
 	"encoding/json"
+	"fmt"
 )
 
-func Prettify(filename string) {
-	path := filepath.Join("build", filename)
-
-	jsonFile, err := os.Open(path)
+func Prettify(jsonpath string) (string, error) {
+	jsonFile, err := os.Open(jsonpath)
 	if err != nil {
-		log.Fatalf("could not open %s: %s", path, err.Error())
+		return "", fmt.Errorf("could not open %s: %s", jsonpath, err.Error())
 	}
 
 	var data map[string]interface{}
 	err = json.NewDecoder(jsonFile).Decode(&data)
 	if err != nil {
-		log.Fatalf("could not parse %s: %s", path, err.Error())
+		return "", fmt.Errorf("could not parse %s: %s", jsonpath, err.Error())
 	}
 
 	formatter := colorjson.NewFormatter()
 	formatter.Indent = 2
 	prettified, err := formatter.Marshal(data)
 	if err != nil {
-		log.Fatalf("could not prettify %s: %s", path, err.Error())
+		return "", fmt.Errorf("could not prettify %s: %s", jsonpath, err.Error())
 	}
 
-	fmt.Println(string(prettified))
+	return string(prettified), nil
 }
