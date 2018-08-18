@@ -32,8 +32,6 @@ func TestBuildPassFail(t *testing.T) {
 			if err != nil {
 				gt.Expect(err).NotTo(gomega.MatchError("build: file exists"))
 			}
-
-			cmd = exec.Command(compiledPath)
 		})
 
 		it.After(func() {
@@ -46,6 +44,7 @@ func TestBuildPassFail(t *testing.T) {
 		when("a path to json file is not given", func() {
 			when("there is no build/build.json", func() {
 				it.Before(func() {
+					cmd = exec.Command(compiledPath)
 					session, err = gexec.Start(cmd, it.Out(), it.Out())
 					gt.Expect(err).NotTo(gomega.HaveOccurred())
 				})
@@ -87,10 +86,10 @@ func TestBuildPassFail(t *testing.T) {
 			})
 		})
 
-		when("there is a build/build.json", func() {
-			when("build.json represents a successful build", func() {
+		when("there is a well-formed JSON file", func() {
+			when("the file represents a successful build", func() {
 				it.Before(func() {
-					completed, err := os.Create(filepath.Join("build", "build.json"))
+					completed, err := os.Create(filepath.Join("build", "successful-build.json"))
 					gt.Expect(err).NotTo(gomega.HaveOccurred())
 
 					_, err = completed.WriteString(`{
@@ -102,6 +101,7 @@ func TestBuildPassFail(t *testing.T) {
 					}`)
 					gt.Expect(err).NotTo(gomega.HaveOccurred())
 
+					cmd = exec.Command(compiledPath, "build/successful-build.json")
 					session, err = gexec.Start(cmd, it.Out(), it.Out())
 					gt.Expect(err).NotTo(gomega.HaveOccurred())
 				})
@@ -115,9 +115,9 @@ func TestBuildPassFail(t *testing.T) {
 				})
 			})
 
-			when("build.json represents an unsuccessful build", func() {
+			when("the file represents an unsuccessful build", func() {
 				it.Before(func() {
-					completed, err := os.Create(filepath.Join("build", "build.json"))
+					completed, err := os.Create(filepath.Join("build", "unsuccessful-build.json"))
 					gt.Expect(err).NotTo(gomega.HaveOccurred())
 
 					_, err = completed.WriteString(`{
@@ -129,6 +129,7 @@ func TestBuildPassFail(t *testing.T) {
 					}`)
 					gt.Expect(err).NotTo(gomega.HaveOccurred())
 
+					cmd = exec.Command(compiledPath, "build/unsuccessful-build.json")
 					session, err = gexec.Start(cmd, it.Out(), it.Out())
 					gt.Expect(err).NotTo(gomega.HaveOccurred())
 				})
@@ -141,22 +142,23 @@ func TestBuildPassFail(t *testing.T) {
 					gt.Eventually(session).Should(gexec.Exit(1))
 				})
 			})
+		})
 
-			when("the build.json file is malformed", func() {
-				it.Before(func() {
-					malformed, err := os.Create(filepath.Join("build", "build.json"))
-					gt.Expect(err).NotTo(gomega.HaveOccurred())
+		when("the JSON file is malformed", func() {
+			it.Before(func() {
+				malformed, err := os.Create(filepath.Join("build", "malformed-build.json"))
+				gt.Expect(err).NotTo(gomega.HaveOccurred())
 
-					_, err = malformed.WriteString(`} {  [] {{ malformed JSON file: ""`)
-					gt.Expect(err).NotTo(gomega.HaveOccurred())
+				_, err = malformed.WriteString(`} {  [] {{ malformed JSON file: ""`)
+				gt.Expect(err).NotTo(gomega.HaveOccurred())
 
-					session, err = gexec.Start(cmd, it.Out(), it.Out())
-					gt.Expect(err).NotTo(gomega.HaveOccurred())
-				})
+				cmd = exec.Command(compiledPath, "build/malformed-build.json")
+				session, err = gexec.Start(cmd, it.Out(), it.Out())
+				gt.Expect(err).NotTo(gomega.HaveOccurred())
+			})
 
-				it("fails with an error", func() {
-					gt.Eventually(session.Err).Should(gbytes.Say("could not parse build/build.json"))
-				})
+			it("fails with an error", func() {
+				gt.Eventually(session.Err).Should(gbytes.Say("could not parse build/malformed-build.json"))
 			})
 		})
 	}, spec.Report(report.Terminal{}))
