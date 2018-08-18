@@ -32,6 +32,8 @@ func TestBuildPassFail(t *testing.T) {
 	}
 
 	spec.Run(t, "build-pass-fail", func(t *testing.T, when spec.G, it spec.S) {
+		gt = gomega.NewGomegaWithT(t)
+
 		when("a path to json file is not given", func() {
 			when("there is no build/build.json", func() {
 				it.Before(func() {
