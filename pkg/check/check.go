@@ -50,17 +50,15 @@ func Check(input *config.CheckRequest) (*config.CheckResponse, error) {
 			return nil, fmt.Errorf("could not find any builds for '%s/%s", input.Source.Pipeline, input.Source.Job)
 		}
 
-		if input.Version.BuildId != "" {
-			newBuilds := make(config.CheckResponse, 0)
+		newBuilds := make(config.CheckResponse, 0)
 
-			for _, b := range builds {
-				if b.ID > buildId && b.Status != string(atc.StatusStarted) && b.Status != string(atc.StatusPending) {
-					newBuildId := strconv.Itoa(b.ID)
-					newBuilds = append(newBuilds, config.Version{BuildId: newBuildId})
-				}
+		for _, b := range builds {
+			if b.ID > buildId && b.Status != string(atc.StatusStarted) && b.Status != string(atc.StatusPending) {
+				newBuildId := strconv.Itoa(b.ID)
+				newBuilds = append(newBuilds, config.Version{BuildId: newBuildId})
 			}
-			return &newBuilds, nil
 		}
+		return &newBuilds, nil
 	}
 
 	return &config.CheckResponse{}, nil
