@@ -17,7 +17,7 @@ func main() {
 
 	request.WorkingDirectory = os.Args[1]
 
-	inResponse, err := in.In(&request)
+	inResponse, err := in.NewInner(&request).In()
 	if err != nil {
 		log.Fatalf("failed to perform 'in': %s", err)
 	}
