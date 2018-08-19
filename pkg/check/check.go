@@ -11,6 +11,11 @@ import (
 	"github.com/concourse/atc"
 )
 
+const (
+	singleJobPageSize int = 1
+	defaultConcoursePageSize int = 50
+)
+
 type Checker interface {
 	Check() (*config.CheckResponse, error)
 }
@@ -22,18 +27,12 @@ type checker struct {
 }
 
 func (c checker) Check() (*config.CheckResponse, error) {
-	pipeline := c.checkRequest.Source.Pipeline
-	job := c.checkRequest.Source.Job
 	version := c.checkRequest.Version
 
 	if version.BuildId == "" {
-		// first run
-		builds, _, found, err := c.concourseTeam.JobBuilds(pipeline, job, gc.Page{Limit: 1})
+		builds, err := c.getBuilds(singleJobPageSize)
 		if err != nil {
-			return nil, fmt.Errorf("could not retrieve builds for '%s/%s': %s", pipeline, job, err.Error())
-		}
-		if !found {
-			return nil, fmt.Errorf("server could not find '%s/%s'", pipeline, job)
+			return nil, err
 		}
 
 		buildId := strconv.Itoa(builds[0].ID)
@@ -47,12 +46,9 @@ func (c checker) Check() (*config.CheckResponse, error) {
 		return nil, fmt.Errorf("could not convert build id '%s' to an int: '%s", version.BuildId, err.Error())
 	}
 
-	builds, _, found, err := c.concourseTeam.JobBuilds(pipeline, job, gc.Page{})
+	builds, err := c.getBuilds(singleJobPageSize)
 	if err != nil {
-		return nil, fmt.Errorf("could not retrieve builds for '%s/%s': %s", pipeline, job, err.Error())
-	}
-	if !found {
-		return nil, fmt.Errorf("server could not find '%s/%s'", pipeline, job)
+		return nil, err
 	}
 
 	if len(builds) == 0 { // there are no builds at all
@@ -92,4 +88,19 @@ func NewCheckerUsingClient(input *config.CheckRequest, client gc.Client) Checker
 		concourseClient: client,
 		concourseTeam:   client.Team(input.Source.Team),
 	}
+}
+
+func (c checker) getBuilds(limit int) ([]atc.Build, error) {
+	pipeline := c.checkRequest.Source.Pipeline
+	job := c.checkRequest.Source.Job
+
+	builds, _, found, err := c.concourseTeam.JobBuilds(pipeline, job, gc.Page{Limit: limit})
+	if err != nil {
+		return nil, fmt.Errorf("could not retrieve builds for '%s/%s': %s", pipeline, job, err.Error())
+	}
+	if !found {
+		return nil, fmt.Errorf("server could not find '%s/%s'", pipeline, job)
+	}
+
+	return builds, nil
 }
