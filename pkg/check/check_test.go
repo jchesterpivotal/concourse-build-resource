@@ -15,7 +15,7 @@ import (
 )
 
 func TestCheckPkg(t *testing.T) {
-	spec.Run(t, "/opt/resource/in", func(t *testing.T, when spec.G, it spec.S) {
+	spec.Run(t, "pkg/check", func(t *testing.T, when spec.G, it spec.S) {
 		when("build ID is defined", func() {
 			faketeam := new(fakes.FakeTeam)
 			fakeclient := new(fakes.FakeClient)
