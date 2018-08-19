@@ -76,11 +76,14 @@ func NewChecker(input *config.CheckRequest) Checker {
 	}
 	client := &http.Client{Transport: tr}
 	concourse := gc.NewClient(input.Source.ConcourseUrl, client, false)
-	team := concourse.Team(input.Source.Team)
 
+	return NewCheckerUsingClient(input, concourse)
+}
+
+func NewCheckerUsingClient(input *config.CheckRequest, client gc.Client) Checker {
 	return checker{
 		CheckRequest: input,
-		ConcourseClient: concourse,
-		ConcourseTeam:team,
+		ConcourseClient: client,
+		ConcourseTeam: client.Team(input.Source.Team),
 	}
 }
