@@ -16,19 +16,19 @@ type Checker interface {
 }
 
 type checker struct {
-	CheckRequest    *config.CheckRequest
-	ConcourseClient gc.Client
-	ConcourseTeam   gc.Team
+	checkRequest    *config.CheckRequest
+	concourseClient gc.Client
+	concourseTeam   gc.Team
 }
 
 func (c checker) Check() (*config.CheckResponse, error) {
-	pipeline := c.CheckRequest.Source.Pipeline
-	job := c.CheckRequest.Source.Job
-	version := c.CheckRequest.Version
+	pipeline := c.checkRequest.Source.Pipeline
+	job := c.checkRequest.Source.Job
+	version := c.checkRequest.Version
 
 	if version.BuildId == "" {
 		// first run
-		builds, _, found, err := c.ConcourseTeam.JobBuilds(pipeline, job, gc.Page{Limit: 1})
+		builds, _, found, err := c.concourseTeam.JobBuilds(pipeline, job, gc.Page{Limit: 1})
 		if err != nil {
 			return nil, fmt.Errorf("could not retrieve builds for '%s/%s: %s", pipeline, job, err.Error())
 		}
@@ -46,7 +46,7 @@ func (c checker) Check() (*config.CheckResponse, error) {
 			return nil, fmt.Errorf("could not convert build id '%s' to an int: '%s", version.BuildId, err.Error())
 		}
 
-		builds, _, found, err := c.ConcourseTeam.JobBuilds(pipeline, job, gc.Page{})
+		builds, _, found, err := c.concourseTeam.JobBuilds(pipeline, job, gc.Page{})
 		if err != nil {
 			return nil, fmt.Errorf("could not retrieve builds for '%s/%s: %s", pipeline, job, err.Error())
 		}
@@ -82,8 +82,8 @@ func NewChecker(input *config.CheckRequest) Checker {
 
 func NewCheckerUsingClient(input *config.CheckRequest, client gc.Client) Checker {
 	return checker{
-		CheckRequest: input,
-		ConcourseClient: client,
-		ConcourseTeam: client.Team(input.Source.Team),
+		checkRequest:    input,
+		concourseClient: client,
+		concourseTeam:   client.Team(input.Source.Team),
 	}
 }
