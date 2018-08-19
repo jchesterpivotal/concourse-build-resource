@@ -32,7 +32,7 @@ func Check(input *config.CheckRequest) (*config.CheckResponse, error) {
 			return nil, fmt.Errorf("could not find any builds for '%s/%s", input.Source.Pipeline, input.Source.Job)
 		}
 
-		buildId := strconv.Itoa( builds[0].ID)
+		buildId := strconv.Itoa(builds[0].ID)
 		return &config.CheckResponse{
 			config.Version{BuildId:buildId},
 		}, nil
