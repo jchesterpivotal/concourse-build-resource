@@ -12,18 +12,14 @@ func main() {
 	var request config.InRequest
 	err := json.NewDecoder(os.Stdin).Decode(&request)
 	if err != nil {
-		log.Printf("failed to parse input JSON: %s", err)
-		os.Exit(1)
-		return
+		log.Fatalf("failed to parse input JSON: %s", err)
 	}
 
 	request.WorkingDirectory = os.Args[1]
 
 	inResponse, err := in.In(&request)
 	if err != nil {
-		log.Printf("failed to perform 'in': %s", err)
-		os.Exit(1)
-		return
+		log.Fatalf("failed to perform 'in': %s", err)
 	}
 
 	json.NewEncoder(os.Stdout).Encode(inResponse)

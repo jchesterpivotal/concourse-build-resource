@@ -12,16 +12,12 @@ func main() {
 	var request config.CheckRequest
 	err := json.NewDecoder(os.Stdin).Decode(&request)
 	if err != nil {
-		log.Printf("failed to parse input JSON: %s", err)
-		os.Exit(1)
-		return
+		log.Fatalf("failed to parse input JSON: %s", err)
 	}
 
 	checkResponse, err := check.Check(&request)
 	if err != nil {
-		log.Printf("failed to perform 'in': %s", err)
-		os.Exit(1)
-		return
+		log.Fatalf("failed to perform 'check': %s", err)
 	}
 
 	err = json.NewEncoder(os.Stdout).Encode(checkResponse)
