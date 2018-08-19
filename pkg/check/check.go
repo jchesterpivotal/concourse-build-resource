@@ -40,40 +40,38 @@ func (c checker) Check() (*config.CheckResponse, error) {
 		return &config.CheckResponse{
 			config.Version{BuildId: buildId},
 		}, nil
-	} else {
-		buildId, err := strconv.Atoi(version.BuildId)
-		if err != nil {
-			return nil, fmt.Errorf("could not convert build id '%s' to an int: '%s", version.BuildId, err.Error())
-		}
-
-		builds, _, found, err := c.concourseTeam.JobBuilds(pipeline, job, gc.Page{})
-		if err != nil {
-			return nil, fmt.Errorf("could not retrieve builds for '%s/%s': %s", pipeline, job, err.Error())
-		}
-		if !found {
-			return nil, fmt.Errorf("server could not find '%s/%s'", pipeline, job)
-		}
-
-		if len(builds) == 0 { // there are no builds at all
-			return &config.CheckResponse{}, nil
-		}
-
-		newBuilds := make(config.CheckResponse, 0)
-		for _, b := range builds {
-			if b.ID > buildId && b.Status != string(atc.StatusStarted) && b.Status != string(atc.StatusPending) {
-				newBuildId := strconv.Itoa(b.ID)
-				newBuilds = append(newBuilds, config.Version{BuildId: newBuildId})
-			}
-		}
-
-		if len(newBuilds) == 0 { // there were no new builds
-			return &config.CheckResponse{version}, nil
-		}
-
-		return &newBuilds, nil
 	}
 
-	return &config.CheckResponse{}, nil
+	buildId, err := strconv.Atoi(version.BuildId)
+	if err != nil {
+		return nil, fmt.Errorf("could not convert build id '%s' to an int: '%s", version.BuildId, err.Error())
+	}
+
+	builds, _, found, err := c.concourseTeam.JobBuilds(pipeline, job, gc.Page{})
+	if err != nil {
+		return nil, fmt.Errorf("could not retrieve builds for '%s/%s': %s", pipeline, job, err.Error())
+	}
+	if !found {
+		return nil, fmt.Errorf("server could not find '%s/%s'", pipeline, job)
+	}
+
+	if len(builds) == 0 { // there are no builds at all
+		return &config.CheckResponse{}, nil
+	}
+
+	newBuilds := make(config.CheckResponse, 0)
+	for _, b := range builds {
+		if b.ID > buildId && b.Status != string(atc.StatusStarted) && b.Status != string(atc.StatusPending) {
+			newBuildId := strconv.Itoa(b.ID)
+			newBuilds = append(newBuilds, config.Version{BuildId: newBuildId})
+		}
+	}
+
+	if len(newBuilds) == 0 { // there were no new builds
+		return &config.CheckResponse{version}, nil
+	}
+
+	return &newBuilds, nil
 }
 
 func NewChecker(input *config.CheckRequest) Checker {
