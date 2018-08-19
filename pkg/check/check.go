@@ -30,10 +30,10 @@ func (c checker) Check() (*config.CheckResponse, error) {
 		// first run
 		builds, _, found, err := c.concourseTeam.JobBuilds(pipeline, job, gc.Page{Limit: 1})
 		if err != nil {
-			return nil, fmt.Errorf("could not retrieve builds for '%s/%s: %s", pipeline, job, err.Error())
+			return nil, fmt.Errorf("could not retrieve builds for '%s/%s': %s", pipeline, job, err.Error())
 		}
 		if !found {
-			return nil, fmt.Errorf("could not find any builds for '%s/%s", pipeline, job)
+			return nil, fmt.Errorf("server could not find '%s/%s'", pipeline, job)
 		}
 
 		buildId := strconv.Itoa(builds[0].ID)
@@ -48,20 +48,28 @@ func (c checker) Check() (*config.CheckResponse, error) {
 
 		builds, _, found, err := c.concourseTeam.JobBuilds(pipeline, job, gc.Page{})
 		if err != nil {
-			return nil, fmt.Errorf("could not retrieve builds for '%s/%s: %s", pipeline, job, err.Error())
+			return nil, fmt.Errorf("could not retrieve builds for '%s/%s': %s", pipeline, job, err.Error())
 		}
 		if !found {
-			return nil, fmt.Errorf("could not find any builds for '%s/%s", pipeline, job)
+			return nil, fmt.Errorf("server could not find '%s/%s'", pipeline, job)
+		}
+
+		if len(builds) == 0 { // there are no builds at all
+			return &config.CheckResponse{}, nil
 		}
 
 		newBuilds := make(config.CheckResponse, 0)
-
 		for _, b := range builds {
 			if b.ID > buildId && b.Status != string(atc.StatusStarted) && b.Status != string(atc.StatusPending) {
 				newBuildId := strconv.Itoa(b.ID)
 				newBuilds = append(newBuilds, config.Version{BuildId: newBuildId})
 			}
 		}
+
+		if len(newBuilds) == 0 { // there were no new builds
+			return &config.CheckResponse{version}, nil
+		}
+
 		return &newBuilds, nil
 	}
 
