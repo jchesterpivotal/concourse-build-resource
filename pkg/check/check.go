@@ -46,7 +46,7 @@ func (c checker) Check() (*config.CheckResponse, error) {
 		return nil, fmt.Errorf("could not convert build id '%s' to an int: '%s", version.BuildId, err.Error())
 	}
 
-	builds, err := c.getBuilds(singleJobPageSize)
+	builds, err := c.getBuilds(defaultConcoursePageSize)
 	if err != nil {
 		return nil, err
 	}

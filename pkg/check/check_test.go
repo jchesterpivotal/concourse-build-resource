@@ -26,6 +26,7 @@ func TestCheckPkg(t *testing.T) {
 			when("there are new builds", func() {
 				when("there are completed builds", func() {
 					gt := gomega.NewGomegaWithT(t)
+					var page concourse.Page
 
 					it.Before(func() {
 						faketeam.JobBuildsReturns([]atc.Build{
@@ -35,10 +36,16 @@ func TestCheckPkg(t *testing.T) {
 						checker := check.NewCheckerUsingClient(&config.CheckRequest{Version: config.Version{BuildId:"111"}}, fakeclient)
 						response, err = checker.Check()
 						gt.Expect(err).NotTo(gomega.HaveOccurred())
+
+						_, _, page = faketeam.JobBuildsArgsForCall(0)
 					})
 
 					it("returns completed builds", func() {
 						gt.Expect(response).To(gomega.Equal(&config.CheckResponse{{BuildId: "555"}, {BuildId: "999"}}))
+					})
+
+					it("asks to fetch 50 builds", func() {
+						gt.Expect(page).To(gomega.Equal(concourse.Page{Limit: 50}))
 					})
 				}, spec.Nested())
 
