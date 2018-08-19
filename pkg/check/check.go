@@ -22,14 +22,18 @@ type checker struct {
 }
 
 func (c checker) Check() (*config.CheckResponse, error) {
-	if c.CheckRequest.Version.BuildId == "" {
+	pipeline := c.CheckRequest.Source.Pipeline
+	job := c.CheckRequest.Source.Job
+	version := c.CheckRequest.Version
+
+	if version.BuildId == "" {
 		// first run
-		builds, _, found, err := c.ConcourseTeam.JobBuilds(c.CheckRequest.Source.Pipeline, c.CheckRequest.Source.Job, gc.Page{Limit: 1})
+		builds, _, found, err := c.ConcourseTeam.JobBuilds(pipeline, job, gc.Page{Limit: 1})
 		if err != nil {
-			return nil, fmt.Errorf("could not retrieve builds for '%s/%s: %s", c.CheckRequest.Source.Pipeline, c.CheckRequest.Source.Job, err.Error())
+			return nil, fmt.Errorf("could not retrieve builds for '%s/%s: %s", pipeline, job, err.Error())
 		}
 		if !found {
-			return nil, fmt.Errorf("could not find any builds for '%s/%s", c.CheckRequest.Source.Pipeline, c.CheckRequest.Source.Job)
+			return nil, fmt.Errorf("could not find any builds for '%s/%s", pipeline, job)
 		}
 
 		buildId := strconv.Itoa(builds[0].ID)
@@ -37,17 +41,17 @@ func (c checker) Check() (*config.CheckResponse, error) {
 			config.Version{BuildId: buildId},
 		}, nil
 	} else {
-		buildId, err := strconv.Atoi(c.CheckRequest.Version.BuildId)
+		buildId, err := strconv.Atoi(version.BuildId)
 		if err != nil {
-			return nil, fmt.Errorf("could not convert build id '%s' to an int: '%s", c.CheckRequest.Version.BuildId, err.Error())
+			return nil, fmt.Errorf("could not convert build id '%s' to an int: '%s", version.BuildId, err.Error())
 		}
 
-		builds, _, found, err := c.ConcourseTeam.JobBuilds(c.CheckRequest.Source.Pipeline, c.CheckRequest.Source.Job, gc.Page{})
+		builds, _, found, err := c.ConcourseTeam.JobBuilds(pipeline, job, gc.Page{})
 		if err != nil {
-			return nil, fmt.Errorf("could not retrieve builds for '%s/%s: %s", c.CheckRequest.Source.Pipeline, c.CheckRequest.Source.Job, err.Error())
+			return nil, fmt.Errorf("could not retrieve builds for '%s/%s: %s", pipeline, job, err.Error())
 		}
 		if !found {
-			return nil, fmt.Errorf("could not find any builds for '%s/%s", c.CheckRequest.Source.Pipeline, c.CheckRequest.Source.Job)
+			return nil, fmt.Errorf("could not find any builds for '%s/%s", pipeline, job)
 		}
 
 		newBuilds := make(config.CheckResponse, 0)
