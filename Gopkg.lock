@@ -60,6 +60,14 @@
   version = "v1.7.0"
 
 [[projects]]
+  digest = "1:15042ad3498153684d09f393bbaec6b216c8eec6d61f63dff711de7d64ed8861"
+  name = "github.com/golang/protobuf"
+  packages = ["proto"]
+  pruneopts = "UT"
+  revision = "b4deda0973fb4c70b50d226b1af49f3da59f5265"
+  version = "v1.1.0"
+
+[[projects]]
   digest = "1:a712b5079fa7fd942a077341757265836063980331c0186360d463d61ffa2223"
   name = "github.com/google/jsonapi"
   packages = ["."]
@@ -100,13 +108,14 @@
   revision = "f15292f7a699fcc1a38a80977f80a046874ba8ac"
 
 [[projects]]
-  digest = "1:58418daa018f162c520512737c19ecd42582524b0f900f2eee7c212ce55cf0da"
+  digest = "1:f9cef3841272cd2e8823effa2492b74ca7c233641df3a3b89e38938336233ec2"
   name = "github.com/onsi/gomega"
   packages = [
     ".",
     "format",
     "gbytes",
     "gexec",
+    "ghttp",
     "internal/assertion",
     "internal/asyncassertion",
     "internal/oraclematcher",
@@ -222,6 +231,7 @@
     "github.com/onsi/gomega",
     "github.com/onsi/gomega/gbytes",
     "github.com/onsi/gomega/gexec",
+    "github.com/onsi/gomega/ghttp",
     "github.com/sclevine/spec",
     "github.com/sclevine/spec/report",
   ]
