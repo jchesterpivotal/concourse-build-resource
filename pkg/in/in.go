@@ -44,7 +44,10 @@ func (i inner) In() (*config.InResponse, error) {
 		return nil, err
 	}
 
-	json.NewEncoder(buildFile).Encode(build)
+	err = json.NewEncoder(buildFile).Encode(build)
+	if err != nil {
+		return nil, fmt.Errorf("could not encode build response from server: %s", err.Error())
+	}
 
 	// resources
 	resources, found, err := i.concourseClient.BuildResources(buildId)
@@ -61,7 +64,10 @@ func (i inner) In() (*config.InResponse, error) {
 		return nil, err
 	}
 
-	json.NewEncoder(resFile).Encode(resources)
+	err = json.NewEncoder(resFile).Encode(resources)
+	if err != nil {
+		return nil, fmt.Errorf("could not encode resources response from server: %s", err.Error())
+	}
 
 	// plan
 	plan, found, err := i.concourseClient.BuildPlan(buildId)
@@ -78,7 +84,10 @@ func (i inner) In() (*config.InResponse, error) {
 		return nil, err
 	}
 
-	json.NewEncoder(planFile).Encode(plan)
+	err = json.NewEncoder(planFile).Encode(plan)
+	if err != nil {
+		return nil, fmt.Errorf("could not encode plan response from server: %s", err.Error())
+	}
 
 	// events
 	events, err := i.concourseClient.BuildEvents(i.inRequest.Version.BuildId)
