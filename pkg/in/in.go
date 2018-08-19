@@ -8,9 +8,9 @@ import (
 	"os"
 	"path/filepath"
 	gc "github.com/concourse/go-concourse/concourse"
-	"strconv"
 	"encoding/json"
 	"crypto/tls"
+	"strconv"
 	"github.com/concourse/fly/eventstream"
 )
 
