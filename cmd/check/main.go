@@ -15,7 +15,7 @@ func main() {
 		log.Fatalf("failed to parse input JSON: %s", err)
 	}
 
-	checkResponse, err := check.Check(&request)
+	checkResponse, err := check.NewChecker(&request).Check()
 	if err != nil {
 		log.Fatalf("failed to perform 'check': %s", err)
 	}
