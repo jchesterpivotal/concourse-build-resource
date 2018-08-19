@@ -129,7 +129,7 @@ func TestFileSystemTraversalsArePrevented(t *testing.T) {
 		"show-build":      "github.com/jchesterpivotal/concourse-build-resource/cmd/show-build",
 		"show-plan":       "github.com/jchesterpivotal/concourse-build-resource/cmd/show-plan",
 		"show-resources":  "github.com/jchesterpivotal/concourse-build-resource/cmd/show-resources",
-		"show-logs":       "github.com/jchesterpivotal/concourse-build-resource/cmd/show-resources",
+		"show-logs":       "github.com/jchesterpivotal/concourse-build-resource/cmd/show-logs",
 	}
 
 	for cmdName, cmdPath := range commandsToTest {
@@ -141,9 +141,9 @@ func TestFileSystemTraversalsArePrevented(t *testing.T) {
 		}
 
 		spec.Run(t, cmdName, func(t *testing.T, when spec.G, it spec.S) {
-			gt := gomega.NewGomegaWithT(t)
-
 			when("given paths intended to perform directory traversal", func() {
+				gt := gomega.NewGomegaWithT(t)
+
 				it("rejects relative path traversals", func() {
 					cmd := exec.Command(compiledPath, "./.././../../sensitive/file")
 					session, err := gexec.Start(cmd, it.Out(), it.Out())
@@ -159,9 +159,11 @@ func TestFileSystemTraversalsArePrevented(t *testing.T) {
 
 					gt.Eventually(session.Err).Should(gbytes.Say("malformed path"))
 				})
-			}, spec.Nested(), spec.Parallel())
+			}, spec.Nested())
 
 			when("any kind of argument other than a single-level directory name is given", func() {
+				gt := gomega.NewGomegaWithT(t)
+
 				it("rejects nested directory paths", func() {
 					cmd := exec.Command(compiledPath, "nested/directory/path")
 					session, err := gexec.Start(cmd, it.Out(), it.Out())
