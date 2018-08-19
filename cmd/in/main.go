@@ -27,5 +27,8 @@ func main() {
 	}
 
 	json.NewEncoder(os.Stdout).Encode(inResponse)
+	if err != nil {
+		log.Fatalf("failed to encode in.In response: %s", err.Error())
+	}
 }
 

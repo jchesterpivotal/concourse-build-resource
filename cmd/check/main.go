@@ -24,5 +24,8 @@ func main() {
 		return
 	}
 
-	json.NewEncoder(os.Stdout).Encode(checkResponse)
+	err = json.NewEncoder(os.Stdout).Encode(checkResponse)
+	if err != nil {
+		log.Fatalf("failed to encode check.Check response: %s", err.Error())
+	}
 }
