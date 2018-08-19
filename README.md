@@ -1,11 +1,5 @@
 # concourse-build-resource
 
-Right now this is untested, so if you use it in production, shame on you.
-
-Basically it is a gaping, bleeding security hole. Untested and dangerous. 
-
-Kick the tires, but if the tires explode and turn your feet into abstract art, I refuse to be held responsible.
-
 ## source
 
 * `concourse_url`: the base URL for your Concourse.
@@ -24,7 +18,8 @@ Will produce 4 files:
 * `plan.json`: the plan of the Job
 * `events.log`: the logs from the Job.
 
-**THERE IS NO REDACTION. THIS MEANS YOUR SECRETS MAY SHOW UP IN THESE FILES. BE CAREFUL.** 
+I can't prevent you from leaking secrets this way. But if your builds are already public and leaking secrets,
+that is sad and distressful.
 
 ## out
 
@@ -103,3 +98,10 @@ jobs:
     - task: show-logs
       file: concourse-build-resource/tasks/show-logs/task.yml
 ```
+
+## Contributing
+
+I'll be _very_ grateful if you write some tests first, given how much of a hassle it was to backfill them.
+
+I'm using [spec](https://github.com/sclevine/spec) to organise the tests and
+[Gomega](https://github.com/onsi/gomega) for matchers and utilities.
