@@ -41,7 +41,6 @@ func TestBuildPassFail(t *testing.T) {
 		gt.Expect(err).NotTo(gomega.MatchError("unsuccessful: file exists"))
 	}
 
-
 	err = os.Mkdir("invalid", os.ModeDir|os.ModePerm)
 	if err != nil {
 		gt.Expect(err).NotTo(gomega.MatchError("invalid: file exists"))

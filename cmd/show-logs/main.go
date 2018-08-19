@@ -5,17 +5,33 @@ import (
 	"path/filepath"
 	"fmt"
 	"io/ioutil"
+	"os"
+	"strings"
 )
 
 func main() {
-	path := filepath.Join("build", "events.log")
+	var jsonpath, cleanpath string
+	if len(os.Args) > 1 {
+		jsonpath = os.Args[1]
 
-	contents, err := ioutil.ReadFile(path)
-	if err != nil {
-		log.Fatalf("could not open %s: %s", path, err.Error())
+		cleanpath = filepath.Clean(jsonpath)
+		if strings.HasPrefix(cleanpath, "/") ||
+			strings.Contains(cleanpath, "..") ||
+			strings.Count(cleanpath, "/") > 1 {
+			log.Fatalf("malformed path")
+		}
+
+		cleanpath = filepath.Join(cleanpath, "events.log")
+	} else {
+		cleanpath = filepath.Join("build", "events.log")
 	}
 
-	fmt.Println("*********************************** [ begin log ] ***********************************")
-	fmt.Print(string(contents))
-	fmt.Println("************************************ [ end log ] ************************************")
+	contents, err := ioutil.ReadFile(cleanpath)
+	if err != nil {
+		log.Fatalf("could not open %s: %s", cleanpath, err.Error())
+	}
+
+	fmt.Println("----------------------------------- [ begin log ] -----------------------------------")
+	fmt.Println(string(contents))
+	fmt.Println("------------------------------------ [ end log ] ------------------------------------")
 }
