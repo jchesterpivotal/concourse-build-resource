@@ -35,7 +35,7 @@ func (i inner) In() (*config.InResponse, error) {
 		return nil, fmt.Errorf("error while fetching build '%s': '%s", i.inRequest.Version.BuildId, err.Error())
 	}
 	if !found {
-		return nil, fmt.Errorf("build '%s' not found: '%s", i.inRequest.Version.BuildId, err.Error())
+		return nil, fmt.Errorf("server could not find '%s/%s' while retrieving build '%s'", i.inRequest.Source.Pipeline, i.inRequest.Source.Job, i.inRequest.Version.BuildId)
 	}
 
 	buildFile, err := os.Create(filepath.Join(i.inRequest.WorkingDirectory, "build.json"))
@@ -52,7 +52,7 @@ func (i inner) In() (*config.InResponse, error) {
 		return nil, fmt.Errorf("error while fetching resources for build '%s': '%s", i.inRequest.Version.BuildId, err.Error())
 	}
 	if !found {
-		return nil, fmt.Errorf("build '%s' not found while fetching resources: '%s", i.inRequest.Version.BuildId, err.Error())
+		return nil, fmt.Errorf("build '%s' not found while fetching resources", i.inRequest.Version.BuildId)
 	}
 
 	resFile, err := os.Create(filepath.Join(i.inRequest.WorkingDirectory, "resources.json"))
@@ -69,7 +69,7 @@ func (i inner) In() (*config.InResponse, error) {
 		return nil, fmt.Errorf("error while fetching plan for build '%s': '%s", i.inRequest.Version.BuildId, err.Error())
 	}
 	if !found {
-		return nil, fmt.Errorf("build '%s' not found while fetching plan: '%s", i.inRequest.Version.BuildId, err.Error())
+		return nil, fmt.Errorf("build '%s' not found while fetching plan", i.inRequest.Version.BuildId)
 	}
 
 	planFile, err := os.Create(filepath.Join(i.inRequest.WorkingDirectory, "plan.json"))
