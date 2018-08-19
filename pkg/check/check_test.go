@@ -7,10 +7,12 @@ import (
 	"github.com/onsi/gomega"
 
 	fakes "github.com/concourse/go-concourse/concourse/concoursefakes"
-	"github.com/jchesterpivotal/concourse-build-resource/pkg/check"
-	"github.com/jchesterpivotal/concourse-build-resource/pkg/config"
 	"github.com/concourse/atc"
 	"github.com/concourse/go-concourse/concourse"
+
+	"github.com/jchesterpivotal/concourse-build-resource/pkg/check"
+	"github.com/jchesterpivotal/concourse-build-resource/pkg/config"
+
 	"fmt"
 )
 
@@ -33,7 +35,7 @@ func TestCheckPkg(t *testing.T) {
 							{ID: 555, Status: string(atc.StatusSucceeded)}, {ID: 999, Status: string(atc.StatusFailed)},
 						}, concourse.Pagination{}, true, nil)
 
-						checker := check.NewCheckerUsingClient(&config.CheckRequest{Version: config.Version{BuildId:"111"}}, fakeclient)
+						checker := check.NewCheckerUsingClient(&config.CheckRequest{Version: config.Version{BuildId: "111"}}, fakeclient)
 						response, err = checker.Check()
 						gt.Expect(err).NotTo(gomega.HaveOccurred())
 
@@ -59,7 +61,7 @@ func TestCheckPkg(t *testing.T) {
 							{ID: 999, Status: string(atc.StatusPending)},
 						}, concourse.Pagination{}, true, nil)
 
-						checker := check.NewCheckerUsingClient(&config.CheckRequest{Version: config.Version{BuildId:"111"}}, fakeclient)
+						checker := check.NewCheckerUsingClient(&config.CheckRequest{Version: config.Version{BuildId: "111"}}, fakeclient)
 						response, err = checker.Check()
 						gt.Expect(err).NotTo(gomega.HaveOccurred())
 					})
@@ -78,13 +80,13 @@ func TestCheckPkg(t *testing.T) {
 							{ID: 999, Status: string(atc.StatusPending)},
 						}, concourse.Pagination{}, true, nil)
 
-						checker := check.NewCheckerUsingClient(&config.CheckRequest{Version: config.Version{BuildId:"111"}}, fakeclient)
+						checker := check.NewCheckerUsingClient(&config.CheckRequest{Version: config.Version{BuildId: "111"}}, fakeclient)
 						response, err = checker.Check()
 						gt.Expect(err).NotTo(gomega.HaveOccurred())
 					})
 
 					it("returns the version given", func() {
-						gt.Expect(response).To(gomega.Equal(&config.CheckResponse{config.Version{BuildId:"111"}}))
+						gt.Expect(response).To(gomega.Equal(&config.CheckResponse{config.Version{BuildId: "111"}}))
 					})
 				})
 			})
@@ -99,13 +101,13 @@ func TestCheckPkg(t *testing.T) {
 						{ID: 999, Status: string(atc.StatusPending)},
 					}, concourse.Pagination{}, true, nil)
 
-					checker := check.NewCheckerUsingClient(&config.CheckRequest{Version: config.Version{BuildId:"999"}}, fakeclient)
+					checker := check.NewCheckerUsingClient(&config.CheckRequest{Version: config.Version{BuildId: "999"}}, fakeclient)
 					response, err = checker.Check()
 					gt.Expect(err).NotTo(gomega.HaveOccurred())
 				})
 
 				it("returns the version it was given", func() {
-					gt.Expect(response).To(gomega.Equal(&config.CheckResponse{config.Version{BuildId:"999"}}))
+					gt.Expect(response).To(gomega.Equal(&config.CheckResponse{config.Version{BuildId: "999"}}))
 				})
 			}, spec.Nested())
 
@@ -115,7 +117,7 @@ func TestCheckPkg(t *testing.T) {
 				it.Before(func() {
 					faketeam.JobBuildsReturns([]atc.Build{}, concourse.Pagination{}, true, nil)
 
-					checker := check.NewCheckerUsingClient(&config.CheckRequest{Version: config.Version{BuildId:"999"}}, fakeclient)
+					checker := check.NewCheckerUsingClient(&config.CheckRequest{Version: config.Version{BuildId: "999"}}, fakeclient)
 					response, err = checker.Check()
 					gt.Expect(err).NotTo(gomega.HaveOccurred())
 				})
@@ -145,7 +147,7 @@ func TestCheckPkg(t *testing.T) {
 			})
 
 			it("only fetches 1 build", func() {
-				gt.Expect(page).To(gomega.Equal(concourse.Page{Limit:1}))
+				gt.Expect(page).To(gomega.Equal(concourse.Page{Limit: 1}))
 			})
 		}, spec.Nested())
 
@@ -156,7 +158,7 @@ func TestCheckPkg(t *testing.T) {
 			var err error
 
 			it.Before(func() {
-				checker := check.NewCheckerUsingClient(&config.CheckRequest{Version: config.Version{BuildId:"not numerical"}}, fakeclient)
+				checker := check.NewCheckerUsingClient(&config.CheckRequest{Version: config.Version{BuildId: "not numerical"}}, fakeclient)
 				response, err = checker.Check()
 			})
 
@@ -178,8 +180,8 @@ func TestCheckPkg(t *testing.T) {
 				faketeam.JobBuildsReturns([]atc.Build{}, concourse.Pagination{}, false, fmt.Errorf("kerfupsed"))
 
 				checker := check.NewCheckerUsingClient(&config.CheckRequest{
-					Version: config.Version{BuildId:"111"},
-					Source: config.Source{Pipeline:"pipeline", Job:"job"},
+					Version: config.Version{BuildId: "111"},
+					Source:  config.Source{Pipeline: "pipeline", Job: "job"},
 				}, fakeclient)
 				response, err = checker.Check()
 			})
@@ -202,8 +204,8 @@ func TestCheckPkg(t *testing.T) {
 				faketeam.JobBuildsReturns([]atc.Build{}, concourse.Pagination{}, false, nil)
 
 				checker := check.NewCheckerUsingClient(&config.CheckRequest{
-					Version: config.Version{BuildId:"111"},
-					Source: config.Source{Pipeline:"pipeline", Job:"job"},
+					Version: config.Version{BuildId: "111"},
+					Source:  config.Source{Pipeline: "pipeline", Job: "job"},
 				}, fakeclient)
 				response, err = checker.Check()
 			})
@@ -213,6 +215,5 @@ func TestCheckPkg(t *testing.T) {
 				gt.Expect(err.Error()).To(gomega.ContainSubstring("server could not find 'pipeline/job'"))
 			})
 		}, spec.Nested())
-
 	}, spec.Report(report.Terminal{}))
 }

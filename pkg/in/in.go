@@ -2,16 +2,18 @@ package in
 
 import (
 	"github.com/jchesterpivotal/concourse-build-resource/pkg/config"
+
+	gc "github.com/concourse/go-concourse/concourse"
+	"github.com/concourse/fly/eventstream"
+
 	"net/http"
 	"time"
 	"fmt"
 	"os"
 	"path/filepath"
-	gc "github.com/concourse/go-concourse/concourse"
 	"encoding/json"
 	"crypto/tls"
 	"strconv"
-	"github.com/concourse/fly/eventstream"
 )
 
 type Inner interface {
@@ -104,7 +106,7 @@ func (i inner) In() (*config.InResponse, error) {
 	eventstream.Render(eventsFile, events)
 
 	return &config.InResponse{
-		Version: i.inRequest.Version,
+		Version:  i.inRequest.Version,
 		Metadata: []config.VersionMetadataField{},
 	}, nil
 }
@@ -123,8 +125,8 @@ func NewInner(input *config.InRequest) Inner {
 
 func NewInnerUsingClient(input *config.InRequest, client gc.Client) Inner {
 	return inner{
-		inRequest: input,
+		inRequest:       input,
 		concourseClient: client,
-		concourseTeam: client.Team(input.Source.Team),
+		concourseTeam:   client.Team(input.Source.Team),
 	}
 }

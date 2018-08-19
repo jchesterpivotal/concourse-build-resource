@@ -6,9 +6,10 @@ import (
 	"github.com/sclevine/spec"
 	"github.com/sclevine/spec/report"
 
+	"github.com/jchesterpivotal/concourse-build-resource/pkg/prettyjson"
+
 	"os"
 	"path/filepath"
-	"github.com/jchesterpivotal/concourse-build-resource/pkg/prettyjson"
 )
 
 func TestPrettifier(t *testing.T) {

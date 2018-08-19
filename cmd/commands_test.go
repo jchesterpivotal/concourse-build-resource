@@ -3,11 +3,12 @@ package main_test
 import (
 	"testing"
 	"github.com/onsi/gomega"
+	"github.com/onsi/gomega/gbytes"
 	"github.com/onsi/gomega/gexec"
-	"os"
 	"github.com/sclevine/spec"
 	"github.com/sclevine/spec/report"
-	"github.com/onsi/gomega/gbytes"
+
+	"os"
 	"os/exec"
 	"strings"
 	"fmt"

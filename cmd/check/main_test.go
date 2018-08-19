@@ -3,18 +3,19 @@ package main_test
 import (
 	"testing"
 	"github.com/onsi/gomega"
-	"github.com/onsi/gomega/gexec"
 	"github.com/onsi/gomega/gbytes"
+	"github.com/onsi/gomega/gexec"
+	"github.com/onsi/gomega/ghttp"
 	"github.com/sclevine/spec"
 	"github.com/sclevine/spec/report"
+
+	"github.com/concourse/atc"
 
 	"os/exec"
 	"bytes"
 	"fmt"
-	"github.com/onsi/gomega/ghttp"
 	"net/http"
 	"encoding/json"
-	"github.com/concourse/atc"
 )
 
 func TestCheckCmd(t *testing.T) {
@@ -69,7 +70,7 @@ func TestCheckCmd(t *testing.T) {
 				server.AppendHandlers(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 					w.Header().Set("Content-Type", "application/json")
 
-					json.NewEncoder(w).Encode([]atc.Build{{ID: 999,Status: string(atc.StatusSucceeded)}})
+					json.NewEncoder(w).Encode([]atc.Build{{ID: 999, Status: string(atc.StatusSucceeded)}})
 				}))
 
 				cmd := exec.Command(compiledPath)

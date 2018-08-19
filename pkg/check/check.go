@@ -2,17 +2,19 @@ package check
 
 import (
 	"github.com/jchesterpivotal/concourse-build-resource/pkg/config"
+
+	gc "github.com/concourse/go-concourse/concourse"
+	"github.com/concourse/atc"
+
 	"net/http"
 	"time"
 	"fmt"
-	gc "github.com/concourse/go-concourse/concourse"
 	"crypto/tls"
 	"strconv"
-	"github.com/concourse/atc"
 )
 
 const (
-	singleJobPageSize int = 1
+	singleJobPageSize        int = 1
 	defaultConcoursePageSize int = 50
 )
 

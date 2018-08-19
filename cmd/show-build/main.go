@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/jchesterpivotal/concourse-build-resource/pkg/prettyjson"
+
 	"fmt"
 	"log"
 	"os"

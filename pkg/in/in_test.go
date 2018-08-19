@@ -6,12 +6,14 @@ import (
 	"github.com/sclevine/spec/report"
 	"github.com/onsi/gomega"
 	fakes "github.com/concourse/go-concourse/concourse/concoursefakes"
+	"github.com/concourse/go-concourse/concourse/eventstream/eventstreamfakes"
 
 	"github.com/jchesterpivotal/concourse-build-resource/pkg/config"
 	"github.com/jchesterpivotal/concourse-build-resource/pkg/in"
+
 	"github.com/concourse/atc"
+
 	"os"
-	"github.com/concourse/go-concourse/concourse/eventstream/eventstreamfakes"
 	"io"
 	"fmt"
 )

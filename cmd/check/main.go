@@ -2,10 +2,11 @@ package main
 
 import (
 	"github.com/jchesterpivotal/concourse-build-resource/pkg/config"
+	"github.com/jchesterpivotal/concourse-build-resource/pkg/check"
+
 	"encoding/json"
 	"os"
 	"log"
-	"github.com/jchesterpivotal/concourse-build-resource/pkg/check"
 )
 
 func main() {

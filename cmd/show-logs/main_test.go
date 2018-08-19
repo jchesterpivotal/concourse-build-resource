@@ -3,13 +3,14 @@ package main_test
 import (
 	"testing"
 	"github.com/onsi/gomega"
+	"github.com/onsi/gomega/gbytes"
 	"github.com/onsi/gomega/gexec"
-	"os"
 	"github.com/sclevine/spec"
 	"github.com/sclevine/spec/report"
+
+	"os"
 	"path/filepath"
 	"os/exec"
-	"github.com/onsi/gomega/gbytes"
 )
 
 func TestShowLogs(t *testing.T) {
@@ -127,7 +128,6 @@ log line the 2nd
 `))
 				})
 			}, spec.Nested(), spec.Sequential())
-
 
 		}, spec.Nested())
 

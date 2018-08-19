@@ -1,11 +1,12 @@
 package main
 
 import (
+	"github.com/jchesterpivotal/concourse-build-resource/pkg/config"
+	"github.com/jchesterpivotal/concourse-build-resource/pkg/in"
+
 	"encoding/json"
 	"os"
-	"github.com/jchesterpivotal/concourse-build-resource/pkg/config"
 	"log"
-	"github.com/jchesterpivotal/concourse-build-resource/pkg/in"
 )
 
 func main() {
@@ -27,4 +28,3 @@ func main() {
 		log.Fatalf("failed to encode in.In response: %s", err.Error())
 	}
 }
-
