@@ -16,6 +16,7 @@ import (
 	"os"
 	"io"
 	"fmt"
+	"io/ioutil"
 )
 
 func TestInPkg(t *testing.T) {
@@ -37,15 +38,33 @@ func TestInPkg(t *testing.T) {
 			var err error
 
 			it.Before(func() {
-				fakeclient.BuildReturns(atc.Build{ID: 111}, true, nil)
-				fakeclient.BuildResourcesReturns(atc.BuildInputsOutputs{}, true, nil)
+				fakeclient.BuildReturns(atc.Build{
+					ID:           999,
+					Name:         "111",
+					TeamName:     "team",
+					PipelineName: "pipeline",
+					JobName:      "job",
+					StartTime:    1010101010,
+					EndTime:      1191919191,
+					Status:       "succeeded",
+					APIURL:       "/api/v1/builds/999",
+				}, true, nil)
+				fakeclient.BuildResourcesReturns(atc.BuildInputsOutputs{
+					Inputs:  []atc.PublicBuildInput{},
+					Outputs: []atc.VersionedResource{},
+				}, true, nil)
 				fakeclient.BuildPlanReturns(atc.PublicBuildPlan{}, true, nil)
 				fakeeventstream.NextEventReturns(nil, io.EOF)
 				fakeclient.BuildEventsReturns(fakeeventstream, nil)
 
 				inner := in.NewInnerUsingClient(&config.InRequest{
-					Source:           config.Source{},
-					Version:          config.Version{BuildId: "111"},
+					Source: config.Source{
+						ConcourseUrl: "https://example.com",
+						Team:         "team",
+						Pipeline:     "pipeline",
+						Job:          "job",
+					},
+					Version:          config.Version{BuildId: "999"},
 					Params:           config.InParams{},
 					WorkingDirectory: "build",
 				}, fakeclient)
@@ -54,7 +73,7 @@ func TestInPkg(t *testing.T) {
 			})
 
 			it("returns the version it was given", func() {
-				gt.Expect(response.Version).To(gomega.Equal(config.Version{BuildId: "111"}))
+				gt.Expect(response.Version).To(gomega.Equal(config.Version{BuildId: "999"}))
 			})
 
 			it("returns no metadata", func() {
@@ -62,20 +81,74 @@ func TestInPkg(t *testing.T) {
 			})
 
 			it("writes out the build.json file", func() {
-				gt.Expect("build/build.json").To(gomega.BeAnExistingFile())
+				gt.Expect(AFileExistsContaining("build/build.json", `"api_url":"/api/v1/builds/999"`, gt)).To(gomega.BeTrue())
+			})
+
+			it("writes out the build-<team>-<pipeline>-<job>-<build number>.json file", func() {
+				gt.Expect(AFileExistsContaining("build/build-team-pipeline-job-111.json", `"api_url":"/api/v1/builds/999"`, gt)).To(gomega.BeTrue())
 			})
 
 			it("writes out the resources.json file", func() {
-				gt.Expect("build/resources.json").To(gomega.BeAnExistingFile())
+				gt.Expect(AFileExistsContaining("build/resources.json", `"inputs":[`, gt)).To(gomega.BeTrue())
+			})
+
+			it("writes out the resources-<team>-<pipeline>-<job>-<build number>.json file", func() {
+				gt.Expect(AFileExistsContaining("build/resources-team-pipeline-job-111.json", `"inputs":[`, gt)).To(gomega.BeTrue())
 			})
 
 			it("writes out the plan.json file", func() {
-				gt.Expect("build/plan.json").To(gomega.BeAnExistingFile())
+				gt.Expect(AFileExistsContaining("build/plan.json", `"plan":`, gt)).To(gomega.BeTrue())
 			})
 
+			it("writes out the plan-<team>-<pipeline>-<job>-<build number>.json file", func() {
+				gt.Expect(AFileExistsContaining("build/plan-team-pipeline-job-111.json", `"plan":`, gt)).To(gomega.BeTrue())
+			})
+
+			// TODO: Tests for logs are less rigorous because mocking up the event streams is a PITA.
 			it("writes out the events.log", func() {
 				gt.Expect("build/events.log").To(gomega.BeAnExistingFile())
 			})
+
+			it("writes out the events-<team>-<pipeline>-<job>-<build number>.log", func() {
+				gt.Expect("build/events-team-pipeline-job-111.log").To(gomega.BeAnExistingFile())
+			})
+
+			it("writes out build/team", func() {
+				gt.Expect(AFileExistsContaining("build/team", "team", gt)).To(gomega.BeTrue())
+			})
+
+			it("writes out build/pipeline", func() {
+				gt.Expect(AFileExistsContaining("build/pipeline", "pipeline", gt)).To(gomega.BeTrue())
+			})
+
+			it("writes out build/job", func() {
+				gt.Expect(AFileExistsContaining("build/job", "job", gt)).To(gomega.BeTrue())
+			})
+
+			it("writes out build/job-number", func() {
+				gt.Expect(AFileExistsContaining("build/job-number", "111", gt)).To(gomega.BeTrue())
+			})
+
+			it("writes out build/global-number", func() {
+				gt.Expect(AFileExistsContaining("build/global-number", "999", gt)).To(gomega.BeTrue())
+			})
+
+			it("writes out build/started-time", func() {
+				gt.Expect(AFileExistsContaining("build/started-time", "1010101010", gt)).To(gomega.BeTrue())
+			})
+
+			it("writes out build/ended-time", func() {
+				gt.Expect(AFileExistsContaining("build/ended-time", "1191919191", gt)).To(gomega.BeTrue())
+			})
+
+			it("writes out build/status", func() {
+				gt.Expect(AFileExistsContaining("build/status", "succeeded", gt)).To(gomega.BeTrue())
+			})
+
+			it("writes out build/url", func() {
+				gt.Expect(AFileExistsContaining("build/url", "https://example.com/teams/team/pipelines/pipeline/jobs/job/builds/111", gt)).To(gomega.BeTrue())
+			})
+
 		}, spec.Nested())
 
 		when("something goes wrong", func() {
@@ -148,4 +221,13 @@ func TestInPkg(t *testing.T) {
 	}, spec.Report(report.Terminal{}))
 
 	gt.Expect(os.RemoveAll("build")).To(gomega.Succeed())
+}
+
+func AFileExistsContaining(filepath string, substring string, gt *gomega.GomegaWithT) bool {
+	gt.Expect(filepath).To(gomega.BeAnExistingFile())
+	contents, err := ioutil.ReadFile(filepath)
+	gt.Expect(err).NotTo(gomega.HaveOccurred())
+	gt.Expect(string(contents)).To(gomega.ContainSubstring(substring))
+
+	return true
 }
