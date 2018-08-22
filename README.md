@@ -89,12 +89,14 @@ To avoid confusion, the log being printed is wrapped with "begin log" and "end l
 resource_types:
 - name: concourse-build
   type: docker-image
+  check_every: 30m
   source:
     repository: gcr.io/cf-elafros-dog/concourse-build-resource
 
 resources:
 - name: build
   type: concourse-build
+  check_every: 30m # try to be neighbourly
   source:
     concourse_url: https://concourse.example.com
     team: main
