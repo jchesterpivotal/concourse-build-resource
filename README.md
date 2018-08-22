@@ -1,5 +1,9 @@
 # concourse-build-resource
 
+Sometimes you want to get build information and logs out of Concourse so you can look at it elsewhere. 
+
+This resource aims to make that as easy as possible.
+
 ## source
 
 * `concourse_url`: the base URL for your Concourse.
@@ -11,15 +15,44 @@ Your pipeline and jobs will need to be public or it won't work.
 
 ## in
 
-Will produce 4 files:
+Will produce a number of files in the resource directory.
+
+### The original responses
 
 * `build.json`: the build metadata
 * `resources.json`: the resource versions that were involved in `get`s or `put`s
 * `plan.json`: the plan of the Job
 * `events.log`: the logs from the Job.
 
-I can't prevent you from leaking secrets this way. But if your builds are already public and leaking secrets,
-that is sad and distressful.
+### The original resources with information encoded in the filename
+
+The same as the above, but with team, pipeline, job and job number added to the filename.
+For example, as well as `build.json`, you would also get `build-teamname-pipelinename-jobname-123.json`.
+
+This feature is intended to make it easier to `put` into blobstores using globs.
+
+### Single-value files
+
+Basic build data is extracted out of `build.json` and turned into individual files:
+
+* `team`: the team name
+* `pipeline`: the pipeline name
+* `job`: the job name
+* `global-number`: the build number from the sequence of all builds on a particular Concourse.
+   This is the same value as the version itself, as it is unique across all teams, pipelines etc.
+* `job-number`: the build number from the sequence for _this_ job. This appears in URLs and the
+   web UI for single job builds. Not to be confused with `global-number`.
+* `started-time`: Timestamp of when the build began.
+* `ended-time`: Timestamp of when the build ended.
+* `status`: The build status. Because this resource ignores `started` and `pending` builds, you will
+   only see `succeeded`, `failed`, `errored` or `aborted`.
+* `url`: the URL pointing to the original job's web UI. This is not the API URL you can find inside `build.json`.
+
+### Warning
+
+If you're scraping logs and other data, you may wind up collecting secrets and spreading them into a new location.
+I can't prevent you from leaking secrets this way. Please make sure to keep sensitive pipelines and jobs private,
+redact your logs and use proper credential management.
 
 ## out
 
