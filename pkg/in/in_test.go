@@ -88,12 +88,20 @@ func TestInPkg(t *testing.T) {
 				gt.Expect(AFileExistsContaining("build/build-team-pipeline-job-111.json", `"api_url":"/api/v1/builds/999"`, gt)).To(gomega.BeTrue())
 			})
 
+			it("writes out the build-<global build number>.json file", func() {
+				gt.Expect(AFileExistsContaining("build/build-999.json", `"api_url":"/api/v1/builds/999"`, gt)).To(gomega.BeTrue())
+			})
+
 			it("writes out the resources.json file", func() {
 				gt.Expect(AFileExistsContaining("build/resources.json", `"inputs":[`, gt)).To(gomega.BeTrue())
 			})
 
 			it("writes out the resources-<team>-<pipeline>-<job>-<build number>.json file", func() {
 				gt.Expect(AFileExistsContaining("build/resources-team-pipeline-job-111.json", `"inputs":[`, gt)).To(gomega.BeTrue())
+			})
+
+			it("writes out the resources-<global build number>.json file", func() {
+				gt.Expect(AFileExistsContaining("build/resources-999.json", `"inputs":[`, gt)).To(gomega.BeTrue())
 			})
 
 			it("writes out the plan.json file", func() {
@@ -104,6 +112,10 @@ func TestInPkg(t *testing.T) {
 				gt.Expect(AFileExistsContaining("build/plan-team-pipeline-job-111.json", `"plan":`, gt)).To(gomega.BeTrue())
 			})
 
+			it("writes out the plan-<global build number>.json file", func() {
+				gt.Expect(AFileExistsContaining("build/plan-999.json", `"plan":`, gt)).To(gomega.BeTrue())
+			})
+
 			// TODO: Tests for logs are less rigorous because mocking up the event streams is a PITA.
 			it("writes out the events.log", func() {
 				gt.Expect("build/events.log").To(gomega.BeAnExistingFile())
@@ -111,6 +123,10 @@ func TestInPkg(t *testing.T) {
 
 			it("writes out the events-<team>-<pipeline>-<job>-<build number>.log", func() {
 				gt.Expect("build/events-team-pipeline-job-111.log").To(gomega.BeAnExistingFile())
+			})
+
+			it("writes out the events-<global build number>.log", func() {
+				gt.Expect("build/events-999.log").To(gomega.BeAnExistingFile())
 			})
 
 			it("writes out build/team", func() {

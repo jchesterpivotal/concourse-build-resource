@@ -26,10 +26,14 @@ Will produce a number of files in the resource directory.
 
 ### The original resources with information encoded in the filename
 
-The same as the above, but with team, pipeline, job and job number added to the filename.
-For example, as well as `build.json`, you would also get `build-teamname-pipelinename-jobname-123.json`.
+There are two variations.
 
-This feature is intended to make it easier to `put` into blobstores using globs.
+* Detailed: Team, pipeline, job and job number are embedded in the filename.
+  For example: `build-teamname-pipelinename-jobname-123.json`.
+* Global build number: The global build number (unique across the Concourse instance) is embedded in the filename.
+  For example: `build-9876.json`
+
+This feature is intended to make it easier to `put` into blobstores using globs or regexps.
 
 ### Single-value files
 

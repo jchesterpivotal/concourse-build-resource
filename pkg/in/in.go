@@ -40,8 +40,9 @@ func (i inner) In() (*config.InResponse, error) {
 		return nil, fmt.Errorf("server could not find '%s/%s' while retrieving build '%s'", i.inRequest.Source.Pipeline, i.inRequest.Source.Job, i.inRequest.Version.BuildId)
 	}
 
-	i.writeJsonFile("build","json", build)
-	i.writeJsonFile(i.addPostfixTo("build", build.Name), "json", build)
+	i.writeJsonFile("build", "json", build)
+	i.writeJsonFile(i.addDetailedPostfixTo("build", build.Name), "json", build)
+	i.writeJsonFile(i.addBuildNumberPostfixTo("build"), "json", build)
 
 	// resources
 	resources, found, err := i.concourseClient.BuildResources(buildId)
@@ -52,8 +53,9 @@ func (i inner) In() (*config.InResponse, error) {
 		return nil, fmt.Errorf("build '%s' not found while fetching resources", i.inRequest.Version.BuildId)
 	}
 
-	i.writeJsonFile("resources","json", resources)
-	i.writeJsonFile(i.addPostfixTo("resources", build.Name), "json", resources)
+	i.writeJsonFile("resources", "json", resources)
+	i.writeJsonFile(i.addDetailedPostfixTo("resources", build.Name), "json", resources)
+	i.writeJsonFile(i.addBuildNumberPostfixTo("resources"), "json", resources)
 
 	// plan
 	plan, found, err := i.concourseClient.BuildPlan(buildId)
@@ -64,8 +66,9 @@ func (i inner) In() (*config.InResponse, error) {
 		return nil, fmt.Errorf("build '%s' not found while fetching plan", i.inRequest.Version.BuildId)
 	}
 
-	i.writeJsonFile("plan","json", plan)
-	i.writeJsonFile(i.addPostfixTo("plan", build.Name), "json", plan)
+	i.writeJsonFile("plan", "json", plan)
+	i.writeJsonFile(i.addDetailedPostfixTo("plan", build.Name), "json", plan)
+	i.writeJsonFile(i.addBuildNumberPostfixTo("plan"), "json", plan)
 
 	// events
 	events, err := i.concourseClient.BuildEvents(i.inRequest.Version.BuildId)
@@ -80,12 +83,19 @@ func (i inner) In() (*config.InResponse, error) {
 	}
 	eventstream.Render(eventsFile, events)
 
-	eventsFilePostfixed, err := os.Create(filepath.Join(i.inRequest.WorkingDirectory, fmt.Sprintf("%s.log", i.addPostfixTo("events", build.Name))))
-	defer eventsFile.Close()
+	eventsFileDetailPostfixed, err := os.Create(filepath.Join(i.inRequest.WorkingDirectory, fmt.Sprintf("%s.log", i.addDetailedPostfixTo("events", build.Name))))
+	defer eventsFileDetailPostfixed.Close()
 	if err != nil {
 		return nil, err
 	}
-	eventstream.Render(eventsFilePostfixed, events)
+	eventstream.Render(eventsFileDetailPostfixed, events)
+
+	eventsFileBuildPostfixed, err := os.Create(filepath.Join(i.inRequest.WorkingDirectory, fmt.Sprintf("%s.log", i.addBuildNumberPostfixTo("events"))))
+	defer eventsFileBuildPostfixed.Close()
+	if err != nil {
+		return nil, err
+	}
+	eventstream.Render(eventsFileBuildPostfixed, events)
 
 	// K-V convenience files
 
@@ -135,7 +145,7 @@ func (i inner) fullUrl(buildname string) string {
 		buildname)
 }
 
-func (i inner) addPostfixTo(name string, buildname string) string {
+func (i inner) addDetailedPostfixTo(name string, buildname string) string {
 	return fmt.Sprintf(
 		"%s-%s-%s-%s-%s",
 		name,
@@ -143,6 +153,10 @@ func (i inner) addPostfixTo(name string, buildname string) string {
 		i.inRequest.Source.Pipeline,
 		i.inRequest.Source.Job,
 		buildname)
+}
+
+func (i inner) addBuildNumberPostfixTo(name string) string {
+	return fmt.Sprintf("%s-%s", name, i.inRequest.Version.BuildId)
 }
 
 func (i inner) writeJsonFile(filename string, extension string, object interface{}) error {
@@ -154,7 +168,7 @@ func (i inner) writeJsonFile(filename string, extension string, object interface
 
 	err = json.NewEncoder(file).Encode(object)
 	if err != nil {
-		return fmt.Errorf("could not encode response from server into '%s': %s", filename,  err.Error())
+		return fmt.Errorf("could not encode response from server into '%s': %s", filename, err.Error())
 	}
 
 	return nil
