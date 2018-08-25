@@ -22,6 +22,13 @@ resources: #####################################################################
     json_key: ((gcp-service-account-json-key))
     initial_version: 0.1.0
 
+- name: github-release
+  type: github-release
+  source:
+    owner: jchesterpivotal
+    repository: concourse-build-resource
+    access_token: ((github-access-token))
+
 jobs: #############################################################################################
 
 - name: test
@@ -52,10 +59,12 @@ jobs: ##########################################################################
       tag_file: image-version/version
       tag_as_latest: true
 
-- name: release-minor
+- name: shipit
   public: true
   plan:
   - aggregate:
+    - get: concourse-build-resource-repo
+      passed: [build-image]
     - get: release-image
       passed: [build-image]
       params: {save: true}
@@ -69,3 +78,20 @@ jobs: ##########################################################################
       tag_as_latest: true
   - put: image-version
     params: { file: image-version/version }
+  - put: github-release
+    params:
+      name: image-version/version
+      tag: image-version/version
+      commitish: concourse-build-resource-repo/.git/ref
+
+- name: bump-patch-version
+  public: true
+  plan:
+  - put: image-version
+    params: { bump: patch }
+
+- name: bump-minor-version
+  public: true
+  plan:
+  - put: image-version
+    params: { bump: patch }
