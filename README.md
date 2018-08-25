@@ -96,6 +96,7 @@ resource_types:
   check_every: 30m
   source:
     repository: gcr.io/cf-elafros-dog/concourse-build-resource
+    tag: 0.1.1 # check https://github.com/jchesterpivotal/concourse-build-resource/releases
 
 resources:
 - name: build
@@ -137,6 +138,14 @@ jobs:
     - task: show-logs
       file: concourse-build-resource/tasks/show-logs/task.yml
 ```
+
+## Versioning
+
+Each image built for this resource is tagged with a version number, including all the test/development versions.
+
+Release versions will have the same tag as the git tag / Github release they belong to.
+
+Use the tags, they are there for you. Otherwise you will have a much weaker ability to reconstruct the history of your builds.
 
 ## Contributing
 
