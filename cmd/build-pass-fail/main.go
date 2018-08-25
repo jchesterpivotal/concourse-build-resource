@@ -3,65 +3,46 @@ package main
 import (
 	"os"
 	"log"
-	"encoding/json"
 	"path/filepath"
 	"strings"
 	"fmt"
+	"io/ioutil"
 )
 
 func main() {
-	var jsonpath, cleanpath string
+	var jsonPath, cleanPath, statusPath, urlPath string
 	if len(os.Args) > 1 {
-		jsonpath = os.Args[1]
+		jsonPath = os.Args[1]
 
-		cleanpath = filepath.Clean(jsonpath)
-		if strings.HasPrefix(cleanpath, "/") ||
-			strings.Contains(cleanpath, "..") ||
-			strings.Count(cleanpath, "/") > 1 {
+		cleanPath = filepath.Clean(jsonPath)
+		if strings.HasPrefix(cleanPath, "/") ||
+			strings.Contains(cleanPath, "..") ||
+			strings.Count(cleanPath, "/") > 1 {
 			log.Fatalf("malformed path")
 		}
 
-		cleanpath = fmt.Sprintf("%s/build.json", cleanpath)
+		statusPath = fmt.Sprintf("%s/status", cleanPath)
+		urlPath = fmt.Sprintf("%s/url", cleanPath)
 	} else {
-		cleanpath = "build/build.json"
+		statusPath = "build/status"
+		urlPath = "build/url"
 	}
 
-	buildInfoFile, err := os.Open(cleanpath)
+	buildStatus, err := ioutil.ReadFile(statusPath)
 	if err != nil {
-		log.Fatalf("could not open %s: %s", cleanpath, err.Error())
+		log.Fatalf("could not read %s: %s", statusPath, err.Error())
 	}
 
-	var build struct {
-		TeamName     string `json:"team_name"`
-		PipelineName string `json:"pipeline_name"`
-		JobName      string `json:"job_name"`
-		Name         string `json:"name"`
-		Status       string `json:"status"`
-	}
-
-	err = json.NewDecoder(buildInfoFile).Decode(&build)
+	buildUrl, err := ioutil.ReadFile(urlPath)
 	if err != nil {
-		log.Fatalf("could not parse %s: %s", cleanpath, err.Error())
+		log.Fatalf("could not read %s: %s", urlPath, err.Error())
 	}
 
-	if build.Status == "succeeded" {
-		log.Printf(
-			"Build /teams/%s/pipelines/%s/jobs/%s/builds/%s succeeded\n",
-			build.TeamName,
-			build.PipelineName,
-			build.JobName,
-			build.Name,
-		)
+	if string(buildStatus) == "succeeded" {
+		log.Printf("Build %s succeeded\n", buildUrl)
 
 		os.Exit(0)
 	} else {
-		log.Fatalf(
-			"Build /teams/%s/pipelines/%s/jobs/%s/builds/%s was unsuccessful & finished with status '%s'\n",
-			build.TeamName,
-			build.PipelineName,
-			build.JobName,
-			build.Name,
-			build.Status,
-		)
+		log.Fatalf("Build %s was unsuccessful & finished with status '%s'\n", buildUrl, buildStatus)
 	}
 }
