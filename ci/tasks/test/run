@@ -11,7 +11,8 @@ export GOOS=linux
 export GOARCH=amd64
 
 pushd concourse-build-resource-repo
-    go test -v -mod=vendor  ./...
+    go mod download
+    go test -v -mod=readonly  ./...
 popd
 
 echo Done.
