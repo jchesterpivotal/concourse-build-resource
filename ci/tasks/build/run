@@ -18,6 +18,6 @@ pushd concourse-build-resource-repo
     go build -mod=vendor -o binaries/show-logs        cmd/show-logs/main.go
 popd
 
-mv concourse-build-resource/binaries/* binaries/
+cp concourse-build-resource/binaries/* binaries/
 
 echo Done.
