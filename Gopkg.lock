@@ -41,11 +41,13 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:7f70110f236e74b92c8239a0d3c3dfa9e7ed371e3ae58907511d36032893317d"
+  digest = "1:78ea1f05dabbed63abdd21cfd5bfca2b83c9ed19cec016060ee9709e6d49c508"
   name = "github.com/concourse/go-concourse"
   packages = [
     "concourse",
+    "concourse/concoursefakes",
     "concourse/eventstream",
+    "concourse/eventstream/eventstreamfakes",
     "concourse/internal",
   ]
   pruneopts = "UT"
@@ -228,6 +230,8 @@
     "github.com/concourse/atc",
     "github.com/concourse/fly/eventstream",
     "github.com/concourse/go-concourse/concourse",
+    "github.com/concourse/go-concourse/concourse/concoursefakes",
+    "github.com/concourse/go-concourse/concourse/eventstream/eventstreamfakes",
     "github.com/onsi/gomega",
     "github.com/onsi/gomega/gbytes",
     "github.com/onsi/gomega/gexec",
