@@ -51,3 +51,21 @@ jobs: ##########################################################################
       build: .
       tag_file: image-version/version
       tag_as_latest: true
+
+- name: release-minor
+  public: true
+  plan:
+  - aggregate:
+    - get: release-image
+      passed: [build-image]
+      params: {save: true}
+    - get: image-version
+      passed: [build-image]
+      params: { bump: final }
+  - put: release-image
+    params:
+      load: release-image
+      tag_file: image-version/version
+      tag_as_latest: true
+  - put: image-version
+    params: { file: image-version/version }
