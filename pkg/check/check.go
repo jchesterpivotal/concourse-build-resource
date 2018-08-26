@@ -95,13 +95,26 @@ func NewCheckerUsingClient(input *config.CheckRequest, client gc.Client) Checker
 func (c checker) getBuilds(limit int) ([]atc.Build, error) {
 	pipeline := c.checkRequest.Source.Pipeline
 	job := c.checkRequest.Source.Job
+	var builds []atc.Build
+	var found bool
+	var err error
 
-	builds, _, found, err := c.concourseTeam.JobBuilds(pipeline, job, gc.Page{Limit: limit})
-	if err != nil {
-		return nil, fmt.Errorf("could not retrieve builds for '%s/%s': %s", pipeline, job, err.Error())
-	}
-	if !found {
-		return nil, fmt.Errorf("server could not find '%s/%s'", pipeline, job)
+	if job == "" {
+		builds, _, found, err = c.concourseTeam.PipelineBuilds(pipeline, gc.Page{Limit: limit})
+		if err != nil {
+			return nil, fmt.Errorf("could not retrieve builds for '%s/%s': %s", pipeline, job, err.Error())
+		}
+		if !found {
+			return nil, fmt.Errorf("server could not find '%s/%s'", pipeline, job)
+		}
+	} else {
+		builds, _, found, err = c.concourseTeam.JobBuilds(pipeline, job, gc.Page{Limit: limit})
+		if err != nil {
+			return nil, fmt.Errorf("could not retrieve builds for '%s/%s': %s", pipeline, job, err.Error())
+		}
+		if !found {
+			return nil, fmt.Errorf("server could not find '%s/%s'", pipeline, job)
+		}
 	}
 
 	return builds, nil

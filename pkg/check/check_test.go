@@ -25,33 +25,90 @@ func TestCheckPkg(t *testing.T) {
 			var response *config.CheckResponse
 			var err error
 
-			when("there are new builds", func() {
-				when("there are completed builds", func() {
-					gt := gomega.NewGomegaWithT(t)
-					var page concourse.Page
+			when("checking a particular job", func() {
+				source := config.Source{
+					ConcourseUrl: "https://example.com",
+					Team:         "test-team",
+					Pipeline:     "test-pipeline",
+					Job:          "test-job",
+				}
 
-					it.Before(func() {
-						faketeam.JobBuildsReturns([]atc.Build{
-							{ID: 555, Status: string(atc.StatusSucceeded)}, {ID: 999, Status: string(atc.StatusFailed)},
-						}, concourse.Pagination{}, true, nil)
+				when("there are new builds", func() {
+					when("there are completed builds", func() {
+						gt := gomega.NewGomegaWithT(t)
+						var page concourse.Page
 
-						checker := check.NewCheckerUsingClient(&config.CheckRequest{Version: config.Version{BuildId: "111"}}, fakeclient)
-						response, err = checker.Check()
-						gt.Expect(err).NotTo(gomega.HaveOccurred())
+						it.Before(func() {
+							faketeam.JobBuildsReturns([]atc.Build{
+								{ID: 555, Status: string(atc.StatusSucceeded)}, {ID: 999, Status: string(atc.StatusFailed)},
+							}, concourse.Pagination{}, true, nil)
 
-						_, _, page = faketeam.JobBuildsArgsForCall(0)
-					})
+							checker := check.NewCheckerUsingClient(&config.CheckRequest{
+								Version: config.Version{BuildId: "111"},
+								Source:  source,
+							}, fakeclient)
+							response, err = checker.Check()
+							gt.Expect(err).NotTo(gomega.HaveOccurred())
 
-					it("returns completed builds", func() {
-						gt.Expect(response).To(gomega.Equal(&config.CheckResponse{{BuildId: "555"}, {BuildId: "999"}}))
-					})
+							_, _, page = faketeam.JobBuildsArgsForCall(0)
+						})
 
-					it("asks to fetch 50 builds", func() {
-						gt.Expect(page).To(gomega.Equal(concourse.Page{Limit: 50}))
+						it("returns completed builds", func() {
+							gt.Expect(response).To(gomega.Equal(&config.CheckResponse{{BuildId: "555"}, {BuildId: "999"}}))
+						})
+
+						it("asks to fetch 50 builds", func() {
+							gt.Expect(page).To(gomega.Equal(concourse.Page{Limit: 50}))
+						})
+					}, spec.Nested())
+
+					when("there is a mix of completed and uncompleted builds", func() {
+						gt := gomega.NewGomegaWithT(t)
+
+						it.Before(func() {
+							faketeam.JobBuildsReturns([]atc.Build{
+								{ID: 555, Status: string(atc.StatusSucceeded)},
+								{ID: 777, Status: string(atc.StatusStarted)},
+								{ID: 999, Status: string(atc.StatusPending)},
+							}, concourse.Pagination{}, true, nil)
+
+							checker := check.NewCheckerUsingClient(&config.CheckRequest{
+								Version: config.Version{BuildId: "111"},
+								Source:  source,
+							}, fakeclient)
+							response, err = checker.Check()
+							gt.Expect(err).NotTo(gomega.HaveOccurred())
+						})
+
+						it("returns only the completed builds, ignoring uncompleted builds", func() {
+							gt.Expect(response).To(gomega.Equal(&config.CheckResponse{{BuildId: "555"}}))
+						})
+					}, spec.Nested())
+
+					when("there are only uncompleted builds", func() {
+						gt := gomega.NewGomegaWithT(t)
+
+						it.Before(func() {
+							faketeam.JobBuildsReturns([]atc.Build{
+								{ID: 777, Status: string(atc.StatusStarted)},
+								{ID: 999, Status: string(atc.StatusPending)},
+							}, concourse.Pagination{}, true, nil)
+
+							checker := check.NewCheckerUsingClient(&config.CheckRequest{
+								Version: config.Version{BuildId: "111"},
+								Source:  source,
+							}, fakeclient)
+							response, err = checker.Check()
+							gt.Expect(err).NotTo(gomega.HaveOccurred())
+						})
+
+						it("returns the version given", func() {
+							gt.Expect(response).To(gomega.Equal(&config.CheckResponse{config.Version{BuildId: "111"}}))
+						})
 					})
 				}, spec.Nested())
 
-				when("there is a mix of completed and uncompleted builds", func() {
+				when("there are no new builds", func() {
 					gt := gomega.NewGomegaWithT(t)
 
 					it.Before(func() {
@@ -61,71 +118,164 @@ func TestCheckPkg(t *testing.T) {
 							{ID: 999, Status: string(atc.StatusPending)},
 						}, concourse.Pagination{}, true, nil)
 
-						checker := check.NewCheckerUsingClient(&config.CheckRequest{Version: config.Version{BuildId: "111"}}, fakeclient)
+						checker := check.NewCheckerUsingClient(&config.CheckRequest{
+							Version: config.Version{BuildId: "999"},
+							Source:  source,
+						}, fakeclient)
 						response, err = checker.Check()
 						gt.Expect(err).NotTo(gomega.HaveOccurred())
 					})
 
-					it("returns only the completed builds, ignoring uncompleted builds", func() {
-						gt.Expect(response).To(gomega.Equal(&config.CheckResponse{{BuildId: "555"}}))
+					it("returns the version it was given", func() {
+						gt.Expect(response).To(gomega.Equal(&config.CheckResponse{config.Version{BuildId: "999"}}))
 					})
 				}, spec.Nested())
 
-				when("there are only uncompleted builds", func() {
+				when("there are no builds at all", func() {
 					gt := gomega.NewGomegaWithT(t)
 
 					it.Before(func() {
-						faketeam.JobBuildsReturns([]atc.Build{
+						faketeam.JobBuildsReturns([]atc.Build{}, concourse.Pagination{}, true, nil)
+
+						checker := check.NewCheckerUsingClient(&config.CheckRequest{
+							Version: config.Version{BuildId: "999"},
+							Source:  source,
+						}, fakeclient)
+						response, err = checker.Check()
+						gt.Expect(err).NotTo(gomega.HaveOccurred())
+					})
+
+					it("returns an empty version array", func() {
+						gt.Expect(response).To(gomega.Equal(&config.CheckResponse{}))
+
+					})
+				}, spec.Nested())
+			}, spec.Nested())
+
+			when("checking all jobs in a pipeline", func() {
+				source := config.Source{
+					ConcourseUrl: "https://example.com",
+					Team:         "test-team",
+					Pipeline:     "test-pipeline",
+				}
+
+				when("there are new builds", func() {
+					when("there are completed builds", func() {
+						gt := gomega.NewGomegaWithT(t)
+						var page concourse.Page
+
+						it.Before(func() {
+							faketeam.PipelineBuildsReturns([]atc.Build{
+								{ID: 555, Status: string(atc.StatusSucceeded)}, {ID: 999, Status: string(atc.StatusFailed)},
+							}, concourse.Pagination{}, true, nil)
+
+							checker := check.NewCheckerUsingClient(&config.CheckRequest{
+								Version: config.Version{BuildId: "111"},
+								Source:  source,
+							}, fakeclient)
+							response, err = checker.Check()
+							gt.Expect(err).NotTo(gomega.HaveOccurred())
+
+							_, page = faketeam.PipelineBuildsArgsForCall(0)
+						})
+
+						it("returns completed builds", func() {
+							gt.Expect(response).To(gomega.Equal(&config.CheckResponse{{BuildId: "555"}, {BuildId: "999"}}))
+						})
+
+						it("asks to fetch 50 builds", func() {
+							gt.Expect(page).To(gomega.Equal(concourse.Page{Limit: 50}))
+						})
+					}, spec.Nested())
+
+					when("there is a mix of completed and uncompleted builds", func() {
+						gt := gomega.NewGomegaWithT(t)
+
+						it.Before(func() {
+							faketeam.PipelineBuildsReturns([]atc.Build{
+								{ID: 555, Status: string(atc.StatusSucceeded)},
+								{ID: 777, Status: string(atc.StatusStarted)},
+								{ID: 999, Status: string(atc.StatusPending)},
+							}, concourse.Pagination{}, true, nil)
+
+							checker := check.NewCheckerUsingClient(&config.CheckRequest{
+								Version: config.Version{BuildId: "111"},
+								Source:  source,
+							}, fakeclient)
+							response, err = checker.Check()
+							gt.Expect(err).NotTo(gomega.HaveOccurred())
+						})
+
+						it("returns only the completed builds, ignoring uncompleted builds", func() {
+							gt.Expect(response).To(gomega.Equal(&config.CheckResponse{{BuildId: "555"}}))
+						})
+					}, spec.Nested())
+
+					when("there are only uncompleted builds", func() {
+						gt := gomega.NewGomegaWithT(t)
+
+						it.Before(func() {
+							faketeam.PipelineBuildsReturns([]atc.Build{
+								{ID: 777, Status: string(atc.StatusStarted)},
+								{ID: 999, Status: string(atc.StatusPending)},
+							}, concourse.Pagination{}, true, nil)
+
+							checker := check.NewCheckerUsingClient(&config.CheckRequest{
+								Version: config.Version{BuildId: "111"},
+								Source:  source,
+							}, fakeclient)
+							response, err = checker.Check()
+							gt.Expect(err).NotTo(gomega.HaveOccurred())
+						})
+
+						it("returns the version given", func() {
+							gt.Expect(response).To(gomega.Equal(&config.CheckResponse{config.Version{BuildId: "111"}}))
+						})
+					})
+				}, spec.Nested())
+
+				when("there are no new builds", func() {
+					gt := gomega.NewGomegaWithT(t)
+
+					it.Before(func() {
+						faketeam.PipelineBuildsReturns([]atc.Build{
+							{ID: 555, Status: string(atc.StatusSucceeded)},
 							{ID: 777, Status: string(atc.StatusStarted)},
 							{ID: 999, Status: string(atc.StatusPending)},
 						}, concourse.Pagination{}, true, nil)
 
-						checker := check.NewCheckerUsingClient(&config.CheckRequest{Version: config.Version{BuildId: "111"}}, fakeclient)
+						checker := check.NewCheckerUsingClient(&config.CheckRequest{
+							Version: config.Version{BuildId: "999"},
+							Source:  source,
+						}, fakeclient)
 						response, err = checker.Check()
 						gt.Expect(err).NotTo(gomega.HaveOccurred())
 					})
 
-					it("returns the version given", func() {
-						gt.Expect(response).To(gomega.Equal(&config.CheckResponse{config.Version{BuildId: "111"}}))
+					it("returns the version it was given", func() {
+						gt.Expect(response).To(gomega.Equal(&config.CheckResponse{config.Version{BuildId: "999"}}))
 					})
-				})
-			}, spec.Nested())
+				}, spec.Nested())
 
-			when("there are no new builds", func() {
-				gt := gomega.NewGomegaWithT(t)
+				when("there are no builds at all", func() {
+					gt := gomega.NewGomegaWithT(t)
 
-				it.Before(func() {
-					faketeam.JobBuildsReturns([]atc.Build{
-						{ID: 555, Status: string(atc.StatusSucceeded)},
-						{ID: 777, Status: string(atc.StatusStarted)},
-						{ID: 999, Status: string(atc.StatusPending)},
-					}, concourse.Pagination{}, true, nil)
+					it.Before(func() {
+						faketeam.PipelineBuildsReturns([]atc.Build{}, concourse.Pagination{}, true, nil)
 
-					checker := check.NewCheckerUsingClient(&config.CheckRequest{Version: config.Version{BuildId: "999"}}, fakeclient)
-					response, err = checker.Check()
-					gt.Expect(err).NotTo(gomega.HaveOccurred())
-				})
+						checker := check.NewCheckerUsingClient(&config.CheckRequest{
+							Version: config.Version{BuildId: "999"},
+							Source:  source,
+						}, fakeclient)
+						response, err = checker.Check()
+						gt.Expect(err).NotTo(gomega.HaveOccurred())
+					})
 
-				it("returns the version it was given", func() {
-					gt.Expect(response).To(gomega.Equal(&config.CheckResponse{config.Version{BuildId: "999"}}))
-				})
-			}, spec.Nested())
+					it("returns an empty version array", func() {
+						gt.Expect(response).To(gomega.Equal(&config.CheckResponse{}))
 
-			when("there are no builds at all", func() {
-				gt := gomega.NewGomegaWithT(t)
-
-				it.Before(func() {
-					faketeam.JobBuildsReturns([]atc.Build{}, concourse.Pagination{}, true, nil)
-
-					checker := check.NewCheckerUsingClient(&config.CheckRequest{Version: config.Version{BuildId: "999"}}, fakeclient)
-					response, err = checker.Check()
-					gt.Expect(err).NotTo(gomega.HaveOccurred())
-				})
-
-				it("returns an empty version array", func() {
-					gt.Expect(response).To(gomega.Equal(&config.CheckResponse{}))
-
-				})
+					})
+				}, spec.Nested())
 			}, spec.Nested())
 		}, spec.Nested())
 
@@ -135,11 +285,17 @@ func TestCheckPkg(t *testing.T) {
 			fakeclient := new(fakes.FakeClient)
 			fakeclient.TeamReturns(faketeam)
 			var page concourse.Page
+			source := config.Source{
+				ConcourseUrl: "https://example.com",
+				Team:         "test-team",
+				Pipeline:     "test-pipeline",
+				Job:          "test-job",
+			}
 
 			it.Before(func() {
 				faketeam.JobBuildsReturns([]atc.Build{{ID: 111, Status: string(atc.StatusSucceeded)}}, concourse.Pagination{}, true, nil)
 
-				checker := check.NewCheckerUsingClient(&config.CheckRequest{}, fakeclient)
+				checker := check.NewCheckerUsingClient(&config.CheckRequest{Source: source}, fakeclient)
 				_, err := checker.Check()
 				gt.Expect(err).NotTo(gomega.HaveOccurred())
 
@@ -156,9 +312,18 @@ func TestCheckPkg(t *testing.T) {
 			fakeclient := new(fakes.FakeClient)
 			var response *config.CheckResponse
 			var err error
+			source := config.Source{
+				ConcourseUrl: "https://example.com",
+				Team:         "test-team",
+				Pipeline:     "test-pipeline",
+				Job:          "test-job",
+			}
 
 			it.Before(func() {
-				checker := check.NewCheckerUsingClient(&config.CheckRequest{Version: config.Version{BuildId: "not numerical"}}, fakeclient)
+				checker := check.NewCheckerUsingClient(&config.CheckRequest{
+					Version: config.Version{BuildId: "not numerical"},
+					Source: source,
+				}, fakeclient)
 				response, err = checker.Check()
 			})
 
