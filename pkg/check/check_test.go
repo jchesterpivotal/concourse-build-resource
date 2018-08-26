@@ -273,7 +273,6 @@ func TestCheckPkg(t *testing.T) {
 
 					it("returns an empty version array", func() {
 						gt.Expect(response).To(gomega.Equal(&config.CheckResponse{}))
-
 					})
 				}, spec.Nested())
 			}, spec.Nested())
@@ -370,14 +369,19 @@ func TestCheckPkg(t *testing.T) {
 
 				checker := check.NewCheckerUsingClient(&config.CheckRequest{
 					Version: config.Version{BuildId: "111"},
-					Source:  config.Source{Pipeline: "pipeline", Job: "job"},
+					Source:  config.Source{
+						ConcourseUrl: "https://example.com",
+						Team:         "team-name",
+						Pipeline:     "pipeline-name",
+						Job:          "job-name",
+					},
 				}, fakeclient)
 				response, err = checker.Check()
 			})
 
 			it("returns an error", func() {
 				gt.Expect(response).To(gomega.BeNil())
-				gt.Expect(err.Error()).To(gomega.ContainSubstring("server could not find 'pipeline/job'"))
+				gt.Expect(err.Error()).To(gomega.ContainSubstring("server could not find 'pipeline-name/job-name'"))
 			})
 		}, spec.Nested())
 	}, spec.Report(report.Terminal{}))

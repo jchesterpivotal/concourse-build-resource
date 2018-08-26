@@ -102,10 +102,10 @@ func (c checker) getBuilds(limit int) ([]atc.Build, error) {
 	if job == "" {
 		builds, _, found, err = c.concourseTeam.PipelineBuilds(pipeline, gc.Page{Limit: limit})
 		if err != nil {
-			return nil, fmt.Errorf("could not retrieve builds for '%s/%s': %s", pipeline, job, err.Error())
+			return nil, fmt.Errorf("could not retrieve builds for '%s': %s", pipeline, err.Error())
 		}
 		if !found {
-			return nil, fmt.Errorf("server could not find '%s/%s'", pipeline, job)
+			return nil, fmt.Errorf("server could not find '%s'", pipeline)
 		}
 	} else {
 		builds, _, found, err = c.concourseTeam.JobBuilds(pipeline, job, gc.Page{Limit: limit})
