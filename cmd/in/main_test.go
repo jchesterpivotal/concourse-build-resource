@@ -44,7 +44,14 @@ func TestInCmd(t *testing.T) {
 					server = ghttp.NewServer()
 					server.RouteToHandler("GET", "/api/v1/builds/111", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 						w.Header().Set("Content-Type", "application/json")
-						json.NewEncoder(w).Encode(atc.Build{ID: 999, Status: string(atc.StatusSucceeded)})
+						json.NewEncoder(w).Encode(atc.Build{
+							ID: 999,
+							Status: string(atc.StatusSucceeded),
+							TeamName: "t",
+							PipelineName: "p",
+							JobName: "j",
+							Name: "111",
+						})
 					}))
 					server.RouteToHandler("GET", "/api/v1/builds/111/resources", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 						w.Header().Set("Content-Type", "application/json")
@@ -72,6 +79,11 @@ func TestInCmd(t *testing.T) {
 
 				it("prints the version to stdout", func() {
 					gt.Eventually(session.Out).Should(gbytes.Say(`"version":{"build_id":"111"}`))
+					gt.Eventually(session).Should(gexec.Exit(0))
+				})
+
+				it("prints metadata to stdout", func() {
+					gt.Eventually(session.Out).Should(gbytes.Say(`"metadata":\[{"name":"team","value":"t"},{"name":"pipeline","value":"p"},{"name":"job","value":"j"},{"name":"name","value":"111"}\]`))
 					gt.Eventually(session).Should(gexec.Exit(0))
 				})
 			}, spec.Nested())

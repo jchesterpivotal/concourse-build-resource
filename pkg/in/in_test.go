@@ -76,8 +76,11 @@ func TestInPkg(t *testing.T) {
 				gt.Expect(response.Version).To(gomega.Equal(config.Version{BuildId: "999"}))
 			})
 
-			it("returns no metadata", func() {
-				gt.Expect(response.Metadata).To(gomega.BeEmpty())
+			it("returns metadata with the team, pipeline, job and job number", func() {
+				gt.Expect(response.Metadata).To(gomega.ContainElement(config.VersionMetadataField{Name:"team", Value: "team"}))
+				gt.Expect(response.Metadata).To(gomega.ContainElement(config.VersionMetadataField{Name:"pipeline", Value: "pipeline"}))
+				gt.Expect(response.Metadata).To(gomega.ContainElement(config.VersionMetadataField{Name:"job", Value: "job"}))
+				gt.Expect(response.Metadata).To(gomega.ContainElement(config.VersionMetadataField{Name:"name", Value: "111"}))
 			})
 
 			it("writes out the build.json file", func() {

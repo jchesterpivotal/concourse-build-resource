@@ -4,17 +4,17 @@ import (
 	"github.com/concourse/atc"
 	"github.com/jchesterpivotal/concourse-build-resource/pkg/config"
 
-	gc "github.com/concourse/go-concourse/concourse"
 	"github.com/concourse/fly/eventstream"
+	gc "github.com/concourse/go-concourse/concourse"
 
-	"net/http"
-	"time"
+	"crypto/tls"
+	"encoding/json"
 	"fmt"
+	"net/http"
 	"os"
 	"path/filepath"
-	"encoding/json"
-	"crypto/tls"
 	"strconv"
+	"time"
 )
 
 type Inner interface {
@@ -124,8 +124,13 @@ func (i inner) In() (*config.InResponse, error) {
 	i.writeStringFile("url", i.fullUrl(build))
 
 	return &config.InResponse{
-		Version:  i.inRequest.Version,
-		Metadata: []config.VersionMetadataField{},
+		Version: i.inRequest.Version,
+		Metadata: []config.VersionMetadataField{
+			{Name: "team", Value: build.TeamName},
+			{Name: "pipeline", Value: build.PipelineName},
+			{Name: "job", Value: build.JobName},
+			{Name: "name", Value: build.Name},
+		},
 	}, nil
 }
 
@@ -149,7 +154,6 @@ func NewInnerUsingClient(input *config.InRequest, client gc.Client) Inner {
 	}
 }
 
-//TODO: this won't work when source doesn't contain team name
 func (i inner) fullUrl(build atc.Build) string {
 	return fmt.Sprintf(
 		"%s/teams/%s/pipelines/%s/jobs/%s/builds/%s",
@@ -160,7 +164,6 @@ func (i inner) fullUrl(build atc.Build) string {
 		build.Name)
 }
 
-//TODO: this won't work when source doesn't contain team name
 func (i inner) addDetailedPostfixTo(name string, build atc.Build) string {
 	return fmt.Sprintf(
 		"%s-%s-%s-%s-%s",
