@@ -59,6 +59,7 @@ jobs: ##########################################################################
       build: .
       tag_file: image-version/version
       tag_as_latest: false
+      tag_prefix: v
 
 - name: shipit
   public: true
@@ -78,6 +79,7 @@ jobs: ##########################################################################
       load: release-image
       tag_file: image-version/version
       tag_as_latest: true
+      tag_prefix: v
   - put: image-version
     params: { file: image-version/version }
   - put: github-release
@@ -85,6 +87,7 @@ jobs: ##########################################################################
       name: image-version/version
       tag: image-version/version
       commitish: concourse-build-resource-repo/.git/ref
+      tag_prefix: v
 
 - name: bump-patch-version
   public: true
