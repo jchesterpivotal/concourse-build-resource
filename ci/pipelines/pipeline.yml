@@ -20,7 +20,7 @@ resources: #####################################################################
     bucket: us.artifacts.cf-elafros-dog.appspot.com
     key: concourse-build-resource-version
     json_key: ((gcp-service-account-json-key))
-    initial_version: 0.1.0
+    initial_version: 0.2.0
 
 - name: github-release
   type: github-release
@@ -99,4 +99,4 @@ jobs: ##########################################################################
   public: true
   plan:
   - put: image-version
-    params: { bump: patch }
+    params: { bump: minor }
