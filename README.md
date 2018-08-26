@@ -96,7 +96,7 @@ resource_types:
   check_every: 30m
   source:
     repository: gcr.io/cf-elafros-dog/concourse-build-resource
-    tag: v0.2.0 # check https://github.com/jchesterpivotal/concourse-build-resource/releases
+    tag: v0.4.0 # check https://github.com/jchesterpivotal/concourse-build-resource/releases
 
 resources:
 - name: build
