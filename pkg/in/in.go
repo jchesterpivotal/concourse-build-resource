@@ -1,6 +1,7 @@
 package in
 
 import (
+	"github.com/concourse/atc"
 	"github.com/jchesterpivotal/concourse-build-resource/pkg/config"
 
 	gc "github.com/concourse/go-concourse/concourse"
@@ -41,7 +42,7 @@ func (i inner) In() (*config.InResponse, error) {
 	}
 
 	i.writeJsonFile("build", "json", build)
-	i.writeJsonFile(i.addDetailedPostfixTo("build", build.Name), "json", build)
+	i.writeJsonFile(i.addDetailedPostfixTo("build", build), "json", build)
 	i.writeJsonFile(i.addBuildNumberPostfixTo("build"), "json", build)
 
 	// resources
@@ -54,7 +55,7 @@ func (i inner) In() (*config.InResponse, error) {
 	}
 
 	i.writeJsonFile("resources", "json", resources)
-	i.writeJsonFile(i.addDetailedPostfixTo("resources", build.Name), "json", resources)
+	i.writeJsonFile(i.addDetailedPostfixTo("resources", build), "json", resources)
 	i.writeJsonFile(i.addBuildNumberPostfixTo("resources"), "json", resources)
 
 	// plan
@@ -67,7 +68,7 @@ func (i inner) In() (*config.InResponse, error) {
 	}
 
 	i.writeJsonFile("plan", "json", plan)
-	i.writeJsonFile(i.addDetailedPostfixTo("plan", build.Name), "json", plan)
+	i.writeJsonFile(i.addDetailedPostfixTo("plan", build), "json", plan)
 	i.writeJsonFile(i.addBuildNumberPostfixTo("plan"), "json", plan)
 
 	// events
@@ -83,7 +84,7 @@ func (i inner) In() (*config.InResponse, error) {
 	}
 	eventstream.Render(eventsFile, events)
 
-	eventsFileDetailPostfixed, err := os.Create(filepath.Join(i.inRequest.WorkingDirectory, fmt.Sprintf("%s.log", i.addDetailedPostfixTo("events", build.Name))))
+	eventsFileDetailPostfixed, err := os.Create(filepath.Join(i.inRequest.WorkingDirectory, fmt.Sprintf("%s.log", i.addDetailedPostfixTo("events", build))))
 	defer eventsFileDetailPostfixed.Close()
 	if err != nil {
 		return nil, err
@@ -99,15 +100,15 @@ func (i inner) In() (*config.InResponse, error) {
 
 	// K-V convenience files
 
-	i.writeStringFile("team", i.inRequest.Source.Team)
-	i.writeStringFile("pipeline", i.inRequest.Source.Pipeline)
-	i.writeStringFile("job", i.inRequest.Source.Job)
-	i.writeStringFile("global-number", i.inRequest.Version.BuildId)
+	i.writeStringFile("team", build.TeamName)
+	i.writeStringFile("pipeline", build.PipelineName)
+	i.writeStringFile("job", build.JobName)
+	i.writeStringFile("global-number", strconv.Itoa(build.ID))
 	i.writeStringFile("job-number", build.Name)
 	i.writeStringFile("started-time", strconv.Itoa(int(build.StartTime)))
 	i.writeStringFile("ended-time", strconv.Itoa(int(build.EndTime)))
 	i.writeStringFile("status", build.Status)
-	i.writeStringFile("url", i.fullUrl(build.Name))
+	i.writeStringFile("url", i.fullUrl(build))
 
 	return &config.InResponse{
 		Version:  i.inRequest.Version,
@@ -135,24 +136,26 @@ func NewInnerUsingClient(input *config.InRequest, client gc.Client) Inner {
 	}
 }
 
-func (i inner) fullUrl(buildname string) string {
+//TODO: this won't work when source doesn't contain team name
+func (i inner) fullUrl(build atc.Build) string {
 	return fmt.Sprintf(
 		"%s/teams/%s/pipelines/%s/jobs/%s/builds/%s",
 		i.inRequest.Source.ConcourseUrl,
-		i.inRequest.Source.Team,
-		i.inRequest.Source.Pipeline,
-		i.inRequest.Source.Job,
-		buildname)
+		build.TeamName,
+		build.PipelineName,
+		build.JobName,
+		build.Name)
 }
 
-func (i inner) addDetailedPostfixTo(name string, buildname string) string {
+//TODO: this won't work when source doesn't contain team name
+func (i inner) addDetailedPostfixTo(name string, build atc.Build) string {
 	return fmt.Sprintf(
 		"%s-%s-%s-%s-%s",
 		name,
-		i.inRequest.Source.Team,
-		i.inRequest.Source.Pipeline,
-		i.inRequest.Source.Job,
-		buildname)
+		build.TeamName,
+		build.PipelineName,
+		build.JobName,
+		build.Name)
 }
 
 func (i inner) addBuildNumberPostfixTo(name string) string {
