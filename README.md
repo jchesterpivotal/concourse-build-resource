@@ -96,7 +96,7 @@ resource_types:
   check_every: 30m
   source:
     repository: gcr.io/cf-elafros-dog/concourse-build-resource
-    tag: 0.1.1 # check https://github.com/jchesterpivotal/concourse-build-resource/releases
+    tag: v0.2.0 # check https://github.com/jchesterpivotal/concourse-build-resource/releases
 
 resources:
 - name: build
@@ -141,11 +141,11 @@ jobs:
 
 ## Versioning
 
-Each image built for this resource is tagged with a version number, including all the test/development versions.
+* Each tagged release on Github corresponds to an image with the same tag.
+* The container tagged `latest` points to the latest release.
+* There are a bunch of `-rc` images that get built upon each commit. It's possible to guess at these tags, but I wouldn't recommend it.
 
-Release versions will have the same tag as the git tag / Github release they belong to.
-
-Use the tags, they are there for you. Otherwise you will have a much weaker ability to reconstruct the history of your builds.
+It is safe to use `latest`, though I recommend pinning to versions so that your pipeline's history is clearer.
 
 ## Contributing
 
