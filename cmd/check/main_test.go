@@ -90,6 +90,36 @@ func TestCheckCmd(t *testing.T) {
 			})
 		}, spec.Nested())
 
+		when("trace is enabled", func() {
+			gt := gomega.NewGomegaWithT(t)
+			var session *gexec.Session
+			var server *ghttp.Server
+
+			it.Before(func() {
+				server = ghttp.NewServer()
+				server.AppendHandlers(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					w.Header().Set("Content-Type", "application/json")
+
+					json.NewEncoder(w).Encode([]atc.Build{{ID: 999, Status: string(atc.StatusSucceeded)}})
+				}))
+
+				cmd := exec.Command(compiledPath)
+				input := fmt.Sprintf(`{"version":{"build_id":"111"},"source":{"concourse_url":"%s","team":"t","pipeline":"p","job":"j","enable_tracing":true}}`, server.URL())
+				cmd.Stdin = bytes.NewBufferString(input)
+				session, err = gexec.Start(cmd, it.Out(), it.Out())
+				gt.Expect(err).NotTo(gomega.HaveOccurred())
+			})
+
+			it.After(func() {
+				server.Close()
+			})
+
+			it("prints traces to stdout", func() {
+				gt.Eventually(session.Err).Should(gbytes.Say(`GET /api/v1/teams/t/pipelines/p/jobs/j/builds`))
+				gt.Eventually(session).Should(gexec.Exit(0))
+			})
+		}, spec.Nested())
+
 		when("something goes wrong with check.Check()", func() {
 			gt := gomega.NewGomegaWithT(t)
 			var session *gexec.Session

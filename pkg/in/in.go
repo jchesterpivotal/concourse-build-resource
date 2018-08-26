@@ -123,7 +123,7 @@ func NewInner(input *config.InRequest) Inner {
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 	}
 	client := &http.Client{Transport: tr}
-	concourse := gc.NewClient(input.Source.ConcourseUrl, client, false)
+	concourse := gc.NewClient(input.Source.ConcourseUrl, client, input.Source.EnableTracing)
 
 	return NewInnerUsingClient(input, concourse)
 }

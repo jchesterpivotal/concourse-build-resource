@@ -79,7 +79,7 @@ func NewChecker(input *config.CheckRequest) Checker {
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 	}
 	client := &http.Client{Transport: tr}
-	concourse := gc.NewClient(input.Source.ConcourseUrl, client, false)
+	concourse := gc.NewClient(input.Source.ConcourseUrl, client, input.Source.EnableTracing)
 
 	return NewCheckerUsingClient(input, concourse)
 }

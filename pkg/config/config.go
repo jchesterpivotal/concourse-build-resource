@@ -1,10 +1,11 @@
 package config
 
 type Source struct {
-	ConcourseUrl string `json:"concourse_url"`
-	Team         string `json:"team"`
-	Pipeline     string `json:"pipeline"`
-	Job          string `json:"job"`
+	ConcourseUrl  string `json:"concourse_url"`
+	Team          string `json:"team"`
+	Pipeline      string `json:"pipeline"`
+	Job           string `json:"job,omitempty"`
+	EnableTracing bool   `json:"enable_tracing,omitempty"`
 }
 
 type Version struct {

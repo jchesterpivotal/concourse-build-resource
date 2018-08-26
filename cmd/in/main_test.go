@@ -76,6 +76,47 @@ func TestInCmd(t *testing.T) {
 				})
 			}, spec.Nested())
 
+			when("trace is enabled", func() {
+				gt := gomega.NewGomegaWithT(t)
+				var session *gexec.Session
+				var server *ghttp.Server
+
+				it.Before(func() {
+					server = ghttp.NewServer()
+					server.RouteToHandler("GET", "/api/v1/builds/111", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+						w.Header().Set("Content-Type", "application/json")
+						json.NewEncoder(w).Encode(atc.Build{ID: 999, Status: string(atc.StatusSucceeded)})
+					}))
+					server.RouteToHandler("GET", "/api/v1/builds/111/resources", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+						w.Header().Set("Content-Type", "application/json")
+						json.NewEncoder(w).Encode(atc.BuildInputsOutputs{})
+					}))
+					server.RouteToHandler("GET", "/api/v1/builds/111/plan", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+						w.Header().Set("Content-Type", "application/json")
+						json.NewEncoder(w).Encode(atc.PublicBuildPlan{})
+					}))
+					server.RouteToHandler("GET", "/api/v1/builds/111/events", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+						w.Header().Set("Content-Type", "application/json")
+						io.WriteString(w, "id: 0\nevent: end\ndata")
+					}))
+
+					cmd := exec.Command(compiledPath, "build")
+					input := fmt.Sprintf(`{"version":{"build_id":"111"},"source":{"concourse_url":"%s","team":"t","pipeline":"p","job":"j","enable_tracing":true}}`, server.URL())
+					cmd.Stdin = bytes.NewBufferString(input)
+					session, err = gexec.Start(cmd, it.Out(), it.Out())
+					gt.Expect(err).NotTo(gomega.HaveOccurred())
+				})
+
+				it.After(func() {
+					server.Close()
+				})
+
+				it("prints the version to stdout", func() {
+					gt.Eventually(session.Err).Should(gbytes.Say(`GET /api/v1/builds/111`))
+					gt.Eventually(session).Should(gexec.Exit(0))
+				})
+			}, spec.Nested())
+
 			when("something goes wrong with in.In()", func() {
 				gt := gomega.NewGomegaWithT(t)
 				var session *gexec.Session
