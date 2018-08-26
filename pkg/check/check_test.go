@@ -89,7 +89,7 @@ func TestCheckPkg(t *testing.T) {
 						gt.Expect(response).To(gomega.Equal(&config.CheckResponse{config.Version{BuildId: "111"}}))
 					})
 				})
-			})
+			}, spec.Nested())
 
 			when("there are no new builds", func() {
 				gt := gomega.NewGomegaWithT(t)
@@ -127,7 +127,7 @@ func TestCheckPkg(t *testing.T) {
 
 				})
 			}, spec.Nested())
-		})
+		}, spec.Nested())
 
 		when("build ID is not defined, meaning this is the first check", func() {
 			gt := gomega.NewGomegaWithT(t)
