@@ -73,6 +73,7 @@ func (i inner) In() (*config.InResponse, error) {
 
 	// events
 	events, err := i.concourseClient.BuildEvents(i.inRequest.Version.BuildId)
+	defer events.Close()
 	if err != nil {
 		return nil, fmt.Errorf("error while fetching events for build '%s': '%s", i.inRequest.Version.BuildId, err.Error())
 	}
@@ -84,19 +85,31 @@ func (i inner) In() (*config.InResponse, error) {
 	}
 	eventstream.Render(eventsFile, events)
 
+	eventsDetailPostfixed, err := i.concourseClient.BuildEvents(i.inRequest.Version.BuildId)
+	defer eventsDetailPostfixed.Close()
+	if err != nil {
+		return nil, fmt.Errorf("error while fetching events for build '%s': '%s", i.inRequest.Version.BuildId, err.Error())
+	}
+
 	eventsFileDetailPostfixed, err := os.Create(filepath.Join(i.inRequest.WorkingDirectory, fmt.Sprintf("%s.log", i.addDetailedPostfixTo("events", build))))
 	defer eventsFileDetailPostfixed.Close()
 	if err != nil {
 		return nil, err
 	}
-	eventstream.Render(eventsFileDetailPostfixed, events)
+	eventstream.Render(eventsFileDetailPostfixed, eventsDetailPostfixed)
+
+	eventsBuildPostfixed, err := i.concourseClient.BuildEvents(i.inRequest.Version.BuildId)
+	defer events.Close()
+	if err != nil {
+		return nil, fmt.Errorf("error while fetching events for build '%s': '%s", i.inRequest.Version.BuildId, err.Error())
+	}
 
 	eventsFileBuildPostfixed, err := os.Create(filepath.Join(i.inRequest.WorkingDirectory, fmt.Sprintf("%s.log", i.addBuildNumberPostfixTo("events"))))
 	defer eventsFileBuildPostfixed.Close()
 	if err != nil {
 		return nil, err
 	}
-	eventstream.Render(eventsFileBuildPostfixed, events)
+	eventstream.Render(eventsFileBuildPostfixed, eventsBuildPostfixed)
 
 	// K-V convenience files
 
