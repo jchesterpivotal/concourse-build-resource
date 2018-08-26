@@ -75,7 +75,7 @@ This task consumes the `build` folder output from the resource and itself passes
 on the results of the build being watched.
 
 This is useful if you coordinate with downstream teams who consume your work: you can add a job to your pipeline
-which fails when the upstream fails.
+which fails when the downstream job fails.
 
 ## `show-build`, `show-plan`, `show-resources`
 
