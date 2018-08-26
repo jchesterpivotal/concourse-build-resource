@@ -111,7 +111,7 @@ func TestInCmd(t *testing.T) {
 					server.Close()
 				})
 
-				it("prints the version to stdout", func() {
+				it("prints the trace", func() {
 					gt.Eventually(session.Err).Should(gbytes.Say(`GET /api/v1/builds/111`))
 					gt.Eventually(session).Should(gexec.Exit(0))
 				})
