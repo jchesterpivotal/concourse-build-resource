@@ -1,4 +1,4 @@
-FROM busybox
+FROM ubuntu:18.04
 
 COPY binaries/check           /opt/resource/check
 COPY binaries/in              /opt/resource/in
