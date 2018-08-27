@@ -93,14 +93,20 @@ func NewCheckerUsingClient(input *config.CheckRequest, client gc.Client) Checker
 }
 
 func (c checker) getBuilds(limit int) ([]atc.Build, error) {
+	concourseUrl := c.checkRequest.Source.ConcourseUrl
+	team := c.checkRequest.Source.Team
 	pipeline := c.checkRequest.Source.Pipeline
 	job := c.checkRequest.Source.Job
-	team := c.checkRequest.Source.Team
 	var builds []atc.Build
 	var found bool
 	var err error
 
-	if job == "" && pipeline == "" {
+	if job == "" && pipeline == "" && team == "" {
+		builds, _, err = c.concourseClient.Builds(gc.Page{Limit: limit})
+		if err != nil {
+			return nil, fmt.Errorf("could not retrieve builds for '%s': %s", concourseUrl, err.Error())
+		}
+	} else if job == "" && pipeline == "" {
 		builds, _, err = c.concourseTeam.Builds(gc.Page{Limit: limit})
 		if err != nil {
 			return nil, fmt.Errorf("could not retrieve builds for '%s': %s", team, err.Error())
