@@ -1,14 +1,14 @@
 package check_test
 
 import (
-	"testing"
+	"github.com/onsi/gomega"
 	"github.com/sclevine/spec"
 	"github.com/sclevine/spec/report"
-	"github.com/onsi/gomega"
+	"testing"
 
-	fakes "github.com/concourse/go-concourse/concourse/concoursefakes"
 	"github.com/concourse/atc"
 	"github.com/concourse/go-concourse/concourse"
+	fakes "github.com/concourse/go-concourse/concourse/concoursefakes"
 
 	"github.com/jchesterpivotal/concourse-build-resource/pkg/check"
 	"github.com/jchesterpivotal/concourse-build-resource/pkg/config"
@@ -40,7 +40,8 @@ func TestCheckPkg(t *testing.T) {
 
 						it.Before(func() {
 							faketeam.JobBuildsReturns([]atc.Build{
-								{ID: 555, Status: string(atc.StatusSucceeded)}, {ID: 999, Status: string(atc.StatusFailed)},
+								{ID: 999, Status: string(atc.StatusFailed)},
+								{ID: 555, Status: string(atc.StatusSucceeded)},
 							}, concourse.Pagination{}, true, nil)
 
 							checker := check.NewCheckerUsingClient(&config.CheckRequest{
@@ -53,7 +54,7 @@ func TestCheckPkg(t *testing.T) {
 							_, _, page = faketeam.JobBuildsArgsForCall(0)
 						})
 
-						it("returns completed builds", func() {
+						it("returns completed builds in order", func() {
 							gt.Expect(response).To(gomega.Equal(&config.CheckResponse{{BuildId: "555"}, {BuildId: "999"}}))
 						})
 
@@ -67,9 +68,9 @@ func TestCheckPkg(t *testing.T) {
 
 						it.Before(func() {
 							faketeam.JobBuildsReturns([]atc.Build{
-								{ID: 555, Status: string(atc.StatusSucceeded)},
-								{ID: 777, Status: string(atc.StatusStarted)},
 								{ID: 999, Status: string(atc.StatusPending)},
+								{ID: 777, Status: string(atc.StatusStarted)},
+								{ID: 555, Status: string(atc.StatusSucceeded)},
 							}, concourse.Pagination{}, true, nil)
 
 							checker := check.NewCheckerUsingClient(&config.CheckRequest{
@@ -166,7 +167,8 @@ func TestCheckPkg(t *testing.T) {
 
 						it.Before(func() {
 							faketeam.PipelineBuildsReturns([]atc.Build{
-								{ID: 555, Status: string(atc.StatusSucceeded)}, {ID: 999, Status: string(atc.StatusFailed)},
+								{ID: 999, Status: string(atc.StatusFailed)},
+								{ID: 555, Status: string(atc.StatusSucceeded)},
 							}, concourse.Pagination{}, true, nil)
 
 							checker := check.NewCheckerUsingClient(&config.CheckRequest{
@@ -179,7 +181,7 @@ func TestCheckPkg(t *testing.T) {
 							_, page = faketeam.PipelineBuildsArgsForCall(0)
 						})
 
-						it("returns completed builds", func() {
+						it("returns completed builds in order", func() {
 							gt.Expect(response).To(gomega.Equal(&config.CheckResponse{{BuildId: "555"}, {BuildId: "999"}}))
 						})
 
@@ -321,7 +323,7 @@ func TestCheckPkg(t *testing.T) {
 			it.Before(func() {
 				checker := check.NewCheckerUsingClient(&config.CheckRequest{
 					Version: config.Version{BuildId: "not numerical"},
-					Source: source,
+					Source:  source,
 				}, fakeclient)
 				response, err = checker.Check()
 			})
@@ -369,7 +371,7 @@ func TestCheckPkg(t *testing.T) {
 
 				checker := check.NewCheckerUsingClient(&config.CheckRequest{
 					Version: config.Version{BuildId: "111"},
-					Source:  config.Source{
+					Source: config.Source{
 						ConcourseUrl: "https://example.com",
 						Team:         "team-name",
 						Pipeline:     "pipeline-name",

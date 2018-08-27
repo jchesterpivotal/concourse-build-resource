@@ -117,5 +117,12 @@ func (c checker) getBuilds(limit int) ([]atc.Build, error) {
 		}
 	}
 
-	return builds, nil
+	return reverseOrder(builds), nil
+}
+
+func reverseOrder(builds []atc.Build) []atc.Build {
+	for i, j := 0, len(builds)-1; i < j; i, j = i+1, j-1 {
+		builds[i], builds[j] = builds[j], builds[i]
+	}
+	return builds
 }
