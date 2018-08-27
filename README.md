@@ -4,14 +4,25 @@ Sometimes you want to get build information and logs out of Concourse so you can
 
 This resource aims to make that as easy as possible.
 
+Authentication is _not_ supported currently. You will need to make all the jobs and pipelines you are following public, or it (essentially) won't work.
+
 ## source
 
-* `concourse_url`: the base URL for your Concourse.
-* `team`, `pipeline`, `job`: hopefully self-explanatory
+* `concourse_url`: the base URL for your Concourse (Required)
+* `team`: the team to follow. (Optional)
+* `pipeline`: the pipeline to follow. (Optional)
+* `job`: the job to follow (Optional)
 
-Authentication is not supported currently. 
+If you leave off `job`, `pipeline` and/or `team`, concourse-build-resource will try to perform checks against whole
+pipelines, or whole teams, or whole Concourse installations, respectively.
 
-Your pipeline and jobs will need to be public or it won't work.
+For example, this configuration watches all jobs in all pipelines in the `example` team:
+
+```yaml
+source:
+  concourse_url: https://example.com/
+  team: example-team
+```
 
 ## in
 
@@ -96,7 +107,7 @@ resource_types:
   check_every: 30m
   source:
     repository: gcr.io/cf-elafros-dog/concourse-build-resource
-    tag: v0.4.0 # check https://github.com/jchesterpivotal/concourse-build-resource/releases
+    tag: v0.5.0 # check https://github.com/jchesterpivotal/concourse-build-resource/releases
 
 resources:
 - name: build
