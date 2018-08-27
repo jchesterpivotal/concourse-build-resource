@@ -3,14 +3,14 @@ package check
 import (
 	"github.com/jchesterpivotal/concourse-build-resource/pkg/config"
 
-	gc "github.com/concourse/go-concourse/concourse"
 	"github.com/concourse/atc"
+	gc "github.com/concourse/go-concourse/concourse"
 
-	"net/http"
-	"time"
-	"fmt"
 	"crypto/tls"
+	"fmt"
+	"net/http"
 	"strconv"
+	"time"
 )
 
 const (
@@ -95,11 +95,17 @@ func NewCheckerUsingClient(input *config.CheckRequest, client gc.Client) Checker
 func (c checker) getBuilds(limit int) ([]atc.Build, error) {
 	pipeline := c.checkRequest.Source.Pipeline
 	job := c.checkRequest.Source.Job
+	team := c.checkRequest.Source.Team
 	var builds []atc.Build
 	var found bool
 	var err error
 
-	if job == "" {
+	if job == "" && pipeline == "" {
+		builds, _, err = c.concourseTeam.Builds(gc.Page{Limit: limit})
+		if err != nil {
+			return nil, fmt.Errorf("could not retrieve builds for '%s': %s", team, err.Error())
+		}
+	} else if job == "" {
 		builds, _, found, err = c.concourseTeam.PipelineBuilds(pipeline, gc.Page{Limit: limit})
 		if err != nil {
 			return nil, fmt.Errorf("could not retrieve builds for '%s': %s", pipeline, err.Error())
