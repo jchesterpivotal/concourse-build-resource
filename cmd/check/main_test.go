@@ -132,7 +132,7 @@ func TestCheckCmd(t *testing.T) {
 			})
 
 			it("fails with an error", func() {
-				gt.Eventually(session.Err).Should(gbytes.Say("failed to perform 'check': could not retrieve builds for 'p/j"))
+				gt.Eventually(session.Err).Should(gbytes.Say("failed to perform 'check': could not retrieve builds for pipeline/job 'p/j"))
 				gt.Eventually(session).Should(gexec.Exit(1))
 			})
 		}, spec.Nested())

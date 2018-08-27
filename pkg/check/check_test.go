@@ -605,7 +605,7 @@ func TestCheckPkg(t *testing.T) {
 
 			it("returns an error", func() {
 				gt.Expect(response).To(gomega.BeNil())
-				gt.Expect(err.Error()).To(gomega.ContainSubstring("could not retrieve builds for 'pipeline/job': kerfupsed"))
+				gt.Expect(err.Error()).To(gomega.ContainSubstring("could not retrieve builds for pipeline/job 'pipeline/job': kerfupsed"))
 			})
 		}, spec.Nested())
 
@@ -634,7 +634,7 @@ func TestCheckPkg(t *testing.T) {
 
 			it("returns an error", func() {
 				gt.Expect(response).To(gomega.BeNil())
-				gt.Expect(err.Error()).To(gomega.ContainSubstring("server could not find 'pipeline-name/job-name'"))
+				gt.Expect(err.Error()).To(gomega.ContainSubstring("server could not find pipeline/job 'pipeline-name/job-name'"))
 			})
 		}, spec.Nested())
 	}, spec.Report(report.Terminal{}))

@@ -104,28 +104,28 @@ func (c checker) getBuilds(limit int) ([]atc.Build, error) {
 	if job == "" && pipeline == "" && team == "" {
 		builds, _, err = c.concourseClient.Builds(gc.Page{Limit: limit})
 		if err != nil {
-			return nil, fmt.Errorf("could not retrieve builds for '%s': %s", concourseUrl, err.Error())
+			return nil, fmt.Errorf("could not retrieve builds for concourse URL '%s': %s", concourseUrl, err.Error())
 		}
 	} else if job == "" && pipeline == "" {
 		builds, _, err = c.concourseTeam.Builds(gc.Page{Limit: limit})
 		if err != nil {
-			return nil, fmt.Errorf("could not retrieve builds for '%s': %s", team, err.Error())
+			return nil, fmt.Errorf("could not retrieve builds for team '%s': %s", team, err.Error())
 		}
 	} else if job == "" {
 		builds, _, found, err = c.concourseTeam.PipelineBuilds(pipeline, gc.Page{Limit: limit})
 		if err != nil {
-			return nil, fmt.Errorf("could not retrieve builds for '%s': %s", pipeline, err.Error())
+			return nil, fmt.Errorf("could not retrieve builds for pipeline '%s': %s", pipeline, err.Error())
 		}
 		if !found {
-			return nil, fmt.Errorf("server could not find '%s'", pipeline)
+			return nil, fmt.Errorf("server could not find pipeline '%s'", pipeline)
 		}
 	} else {
 		builds, _, found, err = c.concourseTeam.JobBuilds(pipeline, job, gc.Page{Limit: limit})
 		if err != nil {
-			return nil, fmt.Errorf("could not retrieve builds for '%s/%s': %s", pipeline, job, err.Error())
+			return nil, fmt.Errorf("could not retrieve builds for pipeline/job '%s/%s': %s", pipeline, job, err.Error())
 		}
 		if !found {
-			return nil, fmt.Errorf("server could not find '%s/%s'", pipeline, job)
+			return nil, fmt.Errorf("server could not find pipeline/job '%s/%s'", pipeline, job)
 		}
 	}
 
