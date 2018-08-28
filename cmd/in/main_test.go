@@ -83,7 +83,12 @@ func TestInCmd(t *testing.T) {
 				})
 
 				it("prints metadata to stdout", func() {
-					gt.Eventually(session.Out).Should(gbytes.Say(`"metadata":\[{"name":"team","value":"t"},{"name":"pipeline","value":"p"},{"name":"job","value":"j"},{"name":"name","value":"111"}\]`))
+					gt.Eventually(session.Out).Should(gbytes.Say(`"metadata":\[`))
+					gt.Eventually(session.Out).Should(gbytes.Say(`{"name":"team","value":"t"}`))
+					gt.Eventually(session.Out).Should(gbytes.Say(`{"name":"pipeline","value":"p"}`))
+					gt.Eventually(session.Out).Should(gbytes.Say(`{"name":"job","value":"j"}`))
+					gt.Eventually(session.Out).Should(gbytes.Say(`{"name":"name","value":"111"}`))
+					gt.Eventually(session.Out).Should(gbytes.Say(`{"name":"url","value":"http://127.0.0.1:(\d+)/teams/t/pipelines/p/jobs/j/builds/111"}\]`))
 					gt.Eventually(session).Should(gexec.Exit(0))
 				})
 			}, spec.Nested())

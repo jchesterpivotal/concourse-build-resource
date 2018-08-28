@@ -130,6 +130,7 @@ func (i inner) In() (*config.InResponse, error) {
 			{Name: "pipeline", Value: build.PipelineName},
 			{Name: "job", Value: build.JobName},
 			{Name: "name", Value: build.Name},
+			{Name: "url", Value: i.fullUrl(build)},
 		},
 	}, nil
 }
