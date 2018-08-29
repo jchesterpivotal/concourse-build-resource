@@ -106,7 +106,7 @@ resource_types:
   type: docker-image
   check_every: 30m
   source:
-    repository: gcr.io/cf-elafros-dog/concourse-build-resource
+    repository: jchesterpivotal/concourse-build-resource
     tag: v0.5.0 # check https://github.com/jchesterpivotal/concourse-build-resource/releases
 
 resources:

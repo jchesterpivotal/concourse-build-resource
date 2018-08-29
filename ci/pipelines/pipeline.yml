@@ -9,18 +9,18 @@ resources: #####################################################################
 - name: release-image
   type: docker-image
   source:
-    repository: gcr.io/cf-elafros-dog/concourse-build-resource
-    username: _json_key
-    password: ((gcp-service-account-json-key))
+    repository: jchesterpivotal/concourse-build-resource
+    username: jchesterpivotal
+    password: ((dockerhub-password))
 
 - name: image-version
   type: semver
   source:
     driver: gcs
-    bucket: us.artifacts.cf-elafros-dog.appspot.com
+    bucket: ((gcs-bucket-name))
     key: concourse-build-resource-version
     json_key: ((gcp-service-account-json-key))
-    initial_version: 0.2.0
+    initial_version: 0.6.0-rc1
 
 - name: github-release
   type: github-release

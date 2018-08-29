@@ -3,7 +3,7 @@ platform: linux
 image_resource:
   type: docker-image
   source:
-    repository: gcr.io/cf-elafros-dog/concourse-build-resource
+    repository: jchesterpivotal/concourse-build-resource
 
 inputs:
 - name: build
