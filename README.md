@@ -119,15 +119,17 @@ resources:
     pipeline: example-pipeline
     job: some-job-you-are-interested-in
 
-- name: concourse-build-resource
+- name: concourse-build-resource # to retrieve utility task YAML
   type: git
-  source: {uri: https://github.com/jchesterpivotal/concourse-build-resource.git}
+  source:
+    uri: https://github.com/jchesterpivotal/concourse-build-resource.git
+    tag: v0.5.0 # check https://github.com/jchesterpivotal/concourse-build-resource/releases
 
 jobs:
 # ....
 
 - name: some-job-you-are-interested-in
-  public: true # required or the resource won't work
+  public: true # when the target job is not public, this resource can't get its data
   plan:
   # ... whatever it is
 
