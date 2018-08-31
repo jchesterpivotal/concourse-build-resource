@@ -165,8 +165,24 @@ func TestInPkg(t *testing.T) {
 				gt.Expect(AFileExistsContaining("build/status", "succeeded", gt)).To(gomega.BeTrue())
 			})
 
-			it("writes out build/url", func() {
-				gt.Expect(AFileExistsContaining("build/url", "https://example.com/teams/team/pipelines/pipeline/jobs/job/builds/111", gt)).To(gomega.BeTrue())
+			it("writes out the build/concourse_url", func() {
+				gt.Expect(AFileExistsContaining("build/concourse_url", "https://example.com", gt)).To(gomega.BeTrue())
+			})
+
+			it("writes out the build/team_url", func() {
+				gt.Expect(AFileExistsContaining("build/team_url", "https://example.com/teams/team", gt)).To(gomega.BeTrue())
+			})
+
+			it("writes out the build/pipeline_url", func() {
+				gt.Expect(AFileExistsContaining("build/pipeline_url", "https://example.com/teams/team/pipelines/pipeline", gt)).To(gomega.BeTrue())
+			})
+
+			it("writes out the build/job_url", func() {
+				gt.Expect(AFileExistsContaining("build/job_url", "https://example.com/teams/team/pipelines/pipeline/jobs/job", gt)).To(gomega.BeTrue())
+			})
+
+			it("writes out build/build_url", func() {
+				gt.Expect(AFileExistsContaining("build/build_url", "https://example.com/teams/team/pipelines/pipeline/jobs/job/builds/111", gt)).To(gomega.BeTrue())
 			})
 
 		}, spec.Nested())

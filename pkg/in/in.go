@@ -121,7 +121,11 @@ func (i inner) In() (*config.InResponse, error) {
 	i.writeStringFile("started-time", strconv.Itoa(int(build.StartTime)))
 	i.writeStringFile("ended-time", strconv.Itoa(int(build.EndTime)))
 	i.writeStringFile("status", build.Status)
-	i.writeStringFile("url", i.fullUrl(build))
+	i.writeStringFile("concourse_url", i.concourseUrl(build))
+	i.writeStringFile("team_url", i.teamUrl(build))
+	i.writeStringFile("pipeline_url", i.pipelineUrl(build))
+	i.writeStringFile("job_url", i.jobUrl(build))
+	i.writeStringFile("build_url", i.buildUrl(build))
 
 	return &config.InResponse{
 		Version: i.inRequest.Version,
@@ -130,7 +134,7 @@ func (i inner) In() (*config.InResponse, error) {
 			{Name: "pipeline", Value: build.PipelineName},
 			{Name: "job", Value: build.JobName},
 			{Name: "name", Value: build.Name},
-			{Name: "url", Value: i.fullUrl(build)},
+			{Name: "url", Value: i.buildUrl(build)},
 		},
 	}, nil
 }
@@ -155,14 +159,40 @@ func NewInnerUsingClient(input *config.InRequest, client gc.Client) Inner {
 	}
 }
 
-func (i inner) fullUrl(build atc.Build) string {
+func (i inner) concourseUrl(build atc.Build) string {
+	return i.inRequest.Source.ConcourseUrl
+}
+
+func (i inner) teamUrl(build atc.Build) string {
 	return fmt.Sprintf(
-		"%s/teams/%s/pipelines/%s/jobs/%s/builds/%s",
-		i.inRequest.Source.ConcourseUrl,
+		"%s/teams/%s",
+		i.concourseUrl(build),
 		build.TeamName,
+	)
+}
+
+func (i inner) pipelineUrl(build atc.Build) string {
+	return fmt.Sprintf(
+		"%s/pipelines/%s",
+		i.teamUrl(build),
 		build.PipelineName,
+	)
+}
+
+func (i inner) jobUrl(build atc.Build) string {
+	return fmt.Sprintf(
+		"%s/jobs/%s",
+		i.pipelineUrl(build),
 		build.JobName,
-		build.Name)
+	)
+}
+
+func (i inner) buildUrl(build atc.Build) string {
+	return fmt.Sprintf(
+		"%s/builds/%s",
+		i.jobUrl(build),
+		build.Name,
+	)
 }
 
 func (i inner) addDetailedPostfixTo(name string, build atc.Build) string {
