@@ -142,19 +142,19 @@ func TestInPkg(t *testing.T) {
 			})
 
 			it("writes out build/job-number", func() {
-				gt.Expect(AFileExistsContaining("build/job-number", "111", gt)).To(gomega.BeTrue())
+				gt.Expect(AFileExistsContaining("build/job_number", "111", gt)).To(gomega.BeTrue())
 			})
 
 			it("writes out build/global-number", func() {
-				gt.Expect(AFileExistsContaining("build/global-number", "999", gt)).To(gomega.BeTrue())
+				gt.Expect(AFileExistsContaining("build/global_number", "999", gt)).To(gomega.BeTrue())
 			})
 
 			it("writes out build/started-time", func() {
-				gt.Expect(AFileExistsContaining("build/started-time", "1010101010", gt)).To(gomega.BeTrue())
+				gt.Expect(AFileExistsContaining("build/started_time", "1010101010", gt)).To(gomega.BeTrue())
 			})
 
 			it("writes out build/ended-time", func() {
-				gt.Expect(AFileExistsContaining("build/ended-time", "1191919191", gt)).To(gomega.BeTrue())
+				gt.Expect(AFileExistsContaining("build/ended_time", "1191919191", gt)).To(gomega.BeTrue())
 			})
 
 			it("writes out build/status", func() {

@@ -53,12 +53,12 @@ Basic build data is extracted out of `build.json` and turned into individual fil
 * `team`: the team name
 * `pipeline`: the pipeline name
 * `job`: the job name
-* `global-number`: the build number from the sequence of all builds on a particular Concourse.
+* `global_number`: the build number from the sequence of all builds on a particular Concourse.
    This is the same value as the version itself, as it is unique across all teams, pipelines etc.
-* `job-number`: the build number from the sequence for _this_ job. This appears in URLs and the
-   web UI for single job builds. Not to be confused with `global-number`.
-* `started-time`: Timestamp of when the build began.
-* `ended-time`: Timestamp of when the build ended.
+* `job_number`: the build number from the sequence for _this_ job. This appears in URLs and the
+   web UI for single job builds. Not to be confused with `global_number`.
+* `started_time`: Timestamp of when the build began.
+* `ended_time`: Timestamp of when the build ended.
 * `status`: The build status. Because this resource ignores `started` and `pending` builds, you will
    only see `succeeded`, `failed`, `errored` or `aborted`.
 * `concourse_url`: the URL pointing to the original job's Concourse server. This will be the same as the `concourse_url`
