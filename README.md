@@ -61,7 +61,12 @@ Basic build data is extracted out of `build.json` and turned into individual fil
 * `ended-time`: Timestamp of when the build ended.
 * `status`: The build status. Because this resource ignores `started` and `pending` builds, you will
    only see `succeeded`, `failed`, `errored` or `aborted`.
-* `url`: the URL pointing to the original job's web UI. This is not the API URL you can find inside `build.json`.
+* `concourse_url`: the URL pointing to the original job's Concourse server. This will be the same as the `concourse_url`
+  you set in `source`.
+* `team_url`: the URL pointing to the team the pipeline belongs to.
+* `pipeline_url`: the URL pointing to the pipeline the job belongs to.
+* `job_url`: the URL pointing to the job the build belongs to.
+* `build_url`: the full build URL for this build.
 
 ### Warning
 
