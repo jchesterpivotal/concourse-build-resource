@@ -130,11 +130,7 @@ func (i inner) In() (*config.InResponse, error) {
 	return &config.InResponse{
 		Version: i.inRequest.Version,
 		Metadata: []config.VersionMetadataField{
-			{Name: "team", Value: build.TeamName},
-			{Name: "pipeline", Value: build.PipelineName},
-			{Name: "job", Value: build.JobName},
-			{Name: "name", Value: build.Name},
-			{Name: "url", Value: i.buildUrl(build)},
+			{Name: "build_url", Value: i.buildUrl(build)},
 		},
 	}, nil
 }

@@ -76,12 +76,8 @@ func TestInPkg(t *testing.T) {
 				gt.Expect(response.Version).To(gomega.Equal(config.Version{BuildId: "999"}))
 			})
 
-			it("returns metadata with the team, pipeline, job and job number", func() {
-				gt.Expect(response.Metadata).To(gomega.ContainElement(config.VersionMetadataField{Name:"team", Value: "team"}))
-				gt.Expect(response.Metadata).To(gomega.ContainElement(config.VersionMetadataField{Name:"pipeline", Value: "pipeline"}))
-				gt.Expect(response.Metadata).To(gomega.ContainElement(config.VersionMetadataField{Name:"job", Value: "job"}))
-				gt.Expect(response.Metadata).To(gomega.ContainElement(config.VersionMetadataField{Name:"name", Value: "111"}))
-				gt.Expect(response.Metadata).To(gomega.ContainElement(config.VersionMetadataField{Name:"url", Value: "https://example.com/teams/team/pipelines/pipeline/jobs/job/builds/111"}))
+			it("returns metadata with the build URL", func() {
+				gt.Expect(response.Metadata).To(gomega.ContainElement(config.VersionMetadataField{Name:"build_url", Value: "https://example.com/teams/team/pipelines/pipeline/jobs/job/builds/111"}))
 			})
 
 			it("writes out the build.json file", func() {
