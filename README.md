@@ -116,7 +116,7 @@ resource_types:
   check_every: 30m
   source:
     repository: jchesterpivotal/concourse-build-resource
-    tag: v0.6.0 # check https://github.com/jchesterpivotal/concourse-build-resource/releases
+    tag: v0.7.0 # check https://github.com/jchesterpivotal/concourse-build-resource/releases
 
 resources:
 - name: build
@@ -133,7 +133,7 @@ resources:
   type: git
   source:
     uri: https://github.com/jchesterpivotal/concourse-build-resource.git
-    tag: v0.6.0 # check https://github.com/jchesterpivotal/concourse-build-resource/releases
+    tag: v0.7.0 # check https://github.com/jchesterpivotal/concourse-build-resource/releases
 
 jobs:
 # ....
