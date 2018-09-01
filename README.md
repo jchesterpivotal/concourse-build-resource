@@ -12,6 +12,9 @@ Authentication is _not_ supported currently. You will need to make all the jobs 
 * `team`: the team to follow. (Optional)
 * `pipeline`: the pipeline to follow. (Optional)
 * `job`: the job to follow (Optional)
+* `initial_build_id`: the first build ID to start versions from, if you wish to start from an earlier build than
+  the most recent on the target Concourse. Please note that if you set this to a very early version, you may wind
+  up adding a  lot of builds for your local Concourse to churn through. (Optional)
 
 If you leave off `job`, `pipeline` and/or `team`, concourse-build-resource will try to perform checks against whole
 pipelines, or whole teams, or whole Concourse installations, respectively.
@@ -123,6 +126,7 @@ resources:
     team: main
     pipeline: example-pipeline
     job: some-job-you-are-interested-in
+    initial_build_id: 12345
 
 - name: concourse-build-resource # to retrieve utility task YAML
   type: git
