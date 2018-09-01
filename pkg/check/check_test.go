@@ -58,8 +58,8 @@ func TestCheckPkg(t *testing.T) {
 							gt.Expect(response).To(gomega.Equal(&config.CheckResponse{{BuildId: "555"}, {BuildId: "999"}}))
 						})
 
-						it("asks to fetch 50 builds", func() {
-							gt.Expect(page).To(gomega.Equal(concourse.Page{Limit: 50}))
+						it("asks to fetch all builds since the given version", func() {
+							gt.Expect(page).To(gomega.Equal(concourse.Page{Since: 111}))
 						})
 					}, spec.Nested())
 
@@ -114,9 +114,7 @@ func TestCheckPkg(t *testing.T) {
 
 					it.Before(func() {
 						faketeam.JobBuildsReturns([]atc.Build{
-							{ID: 555, Status: string(atc.StatusSucceeded)},
-							{ID: 777, Status: string(atc.StatusStarted)},
-							{ID: 999, Status: string(atc.StatusPending)},
+							{ID: 999, Status: string(atc.StatusSucceeded)},
 						}, concourse.Pagination{}, true, nil)
 
 						checker := check.NewCheckerUsingClient(&config.CheckRequest{
@@ -185,8 +183,8 @@ func TestCheckPkg(t *testing.T) {
 							gt.Expect(response).To(gomega.Equal(&config.CheckResponse{{BuildId: "555"}, {BuildId: "999"}}))
 						})
 
-						it("asks to fetch 50 builds", func() {
-							gt.Expect(page).To(gomega.Equal(concourse.Page{Limit: 50}))
+						it("asks to fetch all builds since the given version", func() {
+							gt.Expect(page).To(gomega.Equal(concourse.Page{Since: 111}))
 						})
 					}, spec.Nested())
 
@@ -241,9 +239,7 @@ func TestCheckPkg(t *testing.T) {
 
 					it.Before(func() {
 						faketeam.PipelineBuildsReturns([]atc.Build{
-							{ID: 555, Status: string(atc.StatusSucceeded)},
-							{ID: 777, Status: string(atc.StatusStarted)},
-							{ID: 999, Status: string(atc.StatusPending)},
+							{ID: 999, Status: string(atc.StatusSucceeded)},
 						}, concourse.Pagination{}, true, nil)
 
 						checker := check.NewCheckerUsingClient(&config.CheckRequest{
@@ -310,8 +306,8 @@ func TestCheckPkg(t *testing.T) {
 							gt.Expect(response).To(gomega.Equal(&config.CheckResponse{{BuildId: "555"}, {BuildId: "999"}}))
 						})
 
-						it("asks to fetch 50 builds", func() {
-							gt.Expect(page).To(gomega.Equal(concourse.Page{Limit: 50}))
+						it("asks to fetch all builds since the given version", func() {
+							gt.Expect(page).To(gomega.Equal(concourse.Page{Since: 111}))
 						})
 					}, spec.Nested())
 
@@ -366,9 +362,7 @@ func TestCheckPkg(t *testing.T) {
 
 					it.Before(func() {
 						faketeam.BuildsReturns([]atc.Build{
-							{ID: 555, Status: string(atc.StatusSucceeded)},
-							{ID: 777, Status: string(atc.StatusStarted)},
-							{ID: 999, Status: string(atc.StatusPending)},
+							{ID: 999, Status: string(atc.StatusSucceeded)},
 						}, concourse.Pagination{}, nil)
 
 						checker := check.NewCheckerUsingClient(&config.CheckRequest{
@@ -435,8 +429,8 @@ func TestCheckPkg(t *testing.T) {
 							gt.Expect(response).To(gomega.Equal(&config.CheckResponse{{BuildId: "555"}, {BuildId: "999"}}))
 						})
 
-						it("asks to fetch 50 builds", func() {
-							gt.Expect(page).To(gomega.Equal(concourse.Page{Limit: 50}))
+						it("asks to fetch all builds since the given version", func() {
+							gt.Expect(page).To(gomega.Equal(concourse.Page{Since: 111}))
 						})
 					}, spec.Nested())
 
@@ -491,9 +485,7 @@ func TestCheckPkg(t *testing.T) {
 
 					it.Before(func() {
 						fakeclient.BuildsReturns([]atc.Build{
-							{ID: 555, Status: string(atc.StatusSucceeded)},
-							{ID: 777, Status: string(atc.StatusStarted)},
-							{ID: 999, Status: string(atc.StatusPending)},
+							{ID: 999, Status: string(atc.StatusSucceeded)},
 						}, concourse.Pagination{}, nil)
 
 						checker := check.NewCheckerUsingClient(&config.CheckRequest{

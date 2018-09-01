@@ -13,11 +13,6 @@ import (
 	"time"
 )
 
-const (
-	singleJobPageSize        int = 1
-	defaultConcoursePageSize int = 50
-)
-
 type Checker interface {
 	Check() (*config.CheckResponse, error)
 }
@@ -37,7 +32,7 @@ func (c checker) Check() (*config.CheckResponse, error) {
 	}
 
 	if version.BuildId == "" {
-		builds, err := c.getBuilds(singleJobPageSize)
+		builds, err := c.getBuilds(gc.Page{Limit: 1})
 		if err != nil {
 			return nil, err
 		}
@@ -53,7 +48,7 @@ func (c checker) Check() (*config.CheckResponse, error) {
 		return nil, fmt.Errorf("could not convert build id '%s' to an int: '%s", version.BuildId, err.Error())
 	}
 
-	builds, err := c.getBuilds(defaultConcoursePageSize)
+	builds, err := c.getBuilds(gc.Page{Since: buildId})
 	if err != nil {
 		return nil, err
 	}
@@ -64,7 +59,7 @@ func (c checker) Check() (*config.CheckResponse, error) {
 
 	newBuilds := make(config.CheckResponse, 0)
 	for _, b := range builds {
-		if b.ID > buildId && b.Status != string(atc.StatusStarted) && b.Status != string(atc.StatusPending) {
+		if b.Status != string(atc.StatusStarted) && b.Status != string(atc.StatusPending) {
 			newBuildId := strconv.Itoa(b.ID)
 			newBuilds = append(newBuilds, config.Version{BuildId: newBuildId})
 		}
@@ -97,7 +92,7 @@ func NewCheckerUsingClient(input *config.CheckRequest, client gc.Client) Checker
 	}
 }
 
-func (c checker) getBuilds(limit int) ([]atc.Build, error) {
+func (c checker) getBuilds(page gc.Page) ([]atc.Build, error) {
 	concourseUrl := c.checkRequest.Source.ConcourseUrl
 	team := c.checkRequest.Source.Team
 	pipeline := c.checkRequest.Source.Pipeline
@@ -107,17 +102,17 @@ func (c checker) getBuilds(limit int) ([]atc.Build, error) {
 	var err error
 
 	if job == "" && pipeline == "" && team == "" {
-		builds, _, err = c.concourseClient.Builds(gc.Page{Limit: limit})
+		builds, _, err = c.concourseClient.Builds(page)
 		if err != nil {
 			return nil, fmt.Errorf("could not retrieve builds for concourse URL '%s': %s", concourseUrl, err.Error())
 		}
 	} else if job == "" && pipeline == "" {
-		builds, _, err = c.concourseTeam.Builds(gc.Page{Limit: limit})
+		builds, _, err = c.concourseTeam.Builds(page)
 		if err != nil {
 			return nil, fmt.Errorf("could not retrieve builds for team '%s': %s", team, err.Error())
 		}
 	} else if job == "" {
-		builds, _, found, err = c.concourseTeam.PipelineBuilds(pipeline, gc.Page{Limit: limit})
+		builds, _, found, err = c.concourseTeam.PipelineBuilds(pipeline, page)
 		if err != nil {
 			return nil, fmt.Errorf("could not retrieve builds for pipeline '%s': %s", pipeline, err.Error())
 		}
@@ -125,7 +120,7 @@ func (c checker) getBuilds(limit int) ([]atc.Build, error) {
 			return nil, fmt.Errorf("server could not find pipeline '%s'", pipeline)
 		}
 	} else {
-		builds, _, found, err = c.concourseTeam.JobBuilds(pipeline, job, gc.Page{Limit: limit})
+		builds, _, found, err = c.concourseTeam.JobBuilds(pipeline, job, page)
 		if err != nil {
 			return nil, fmt.Errorf("could not retrieve builds for pipeline/job '%s/%s': %s", pipeline, job, err.Error())
 		}
