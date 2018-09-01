@@ -2,6 +2,7 @@ package check
 
 import (
 	"github.com/jchesterpivotal/concourse-build-resource/pkg/config"
+	"log"
 
 	"github.com/concourse/atc"
 	gc "github.com/concourse/go-concourse/concourse"
@@ -26,6 +27,10 @@ type checker struct {
 const defaultVersionPageSize = 100
 
 func (c checker) Check() (*config.CheckResponse, error) {
+	if c.checkRequest.Source.EnableTracing {
+		log.Printf("Received CheckRequest: %+v", c.checkRequest)
+	}
+
 	version := c.checkRequest.Version
 	initialBuildId := c.checkRequest.Source.InitialBuildId
 	versionPageSize := c.checkRequest.Source.FetchPageSize

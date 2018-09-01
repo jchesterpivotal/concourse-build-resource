@@ -3,6 +3,7 @@ package in
 import (
 	"github.com/concourse/atc"
 	"github.com/jchesterpivotal/concourse-build-resource/pkg/config"
+	"log"
 
 	"github.com/concourse/fly/eventstream"
 	gc "github.com/concourse/go-concourse/concourse"
@@ -27,6 +28,10 @@ type inner struct {
 }
 
 func (i inner) In() (*config.InResponse, error) {
+	if i.inRequest.Source.EnableTracing {
+		log.Printf("Received InRequest: %+v", i.inRequest)
+	}
+
 	buildId, err := strconv.Atoi(i.inRequest.Version.BuildId)
 	if err != nil {
 		return nil, fmt.Errorf("could not convert build id '%s' to an int: '%s", i.inRequest.Version.BuildId, err.Error())
