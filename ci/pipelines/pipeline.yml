@@ -4,7 +4,14 @@ resources: #####################################################################
   type: git
   check_every: 10m
   source:
-    uri: https://github.com/jchesterpivotal/concourse-build-resource.git
+    uri: git@github.com:jchesterpivotal/concourse-build-resource.git
+    branch: master
+    private_key: ((github-robot-key))
+    git_config:
+    - name: user.name
+      value: Jacques Chester
+    - name: user.email
+      value: jchester+githubrobot@pivotal.io
 
 - name: release-image
   type: docker-image
@@ -74,20 +81,33 @@ jobs: ##########################################################################
     - get: image-version
       passed: [build-image]
       params: { bump: final }
-  - put: release-image
+
+  - task: update-tags-in-files
+    file: concourse-build-resource-repo/ci/tasks/update-tags/task.yml
     params:
-      load: release-image
-      tag_file: image-version/version
-      tag_as_latest: true
-      tag_prefix: v
-  - put: image-version
-    params: { file: image-version/version }
-  - put: github-release
+      GIT_COMMITTER_NAME: Jacques Chester
+      GIT_COMMITTER_EMAIL: jchester+githubrobot@pivotal.io
+      GIT_AUTHOR_NAME: Jacques Chester
+      GIT_AUTHOR_EMAIL: jacques@chester.id.au
+  - put: concourse-build-resource-repo
     params:
-      name: image-version/version
-      tag: image-version/version
-      commitish: concourse-build-resource-repo/.git/ref
-      tag_prefix: v
+      repository: updated-tags-repo
+
+  - aggregate:
+    - put: release-image
+      params:
+        load: release-image
+        tag_file: image-version/version
+        tag_as_latest: true
+        tag_prefix: v
+    - put: image-version
+      params: { file: image-version/version }
+    - put: github-release
+      params:
+        name: image-version/version
+        tag: image-version/version
+        commitish: concourse-build-resource-repo/.git/ref
+        tag_prefix: v
 
 - name: bump-patch-version
   public: true
