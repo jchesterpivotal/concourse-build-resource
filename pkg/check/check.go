@@ -23,9 +23,15 @@ type checker struct {
 	concourseTeam   gc.Team
 }
 
+const defaultVersionPageSize = 100
+
 func (c checker) Check() (*config.CheckResponse, error) {
 	version := c.checkRequest.Version
 	initialBuildId := c.checkRequest.Source.InitialBuildId
+	versionPageSize := c.checkRequest.Source.FetchPageSize
+	if versionPageSize == 0 {
+		versionPageSize = defaultVersionPageSize
+	}
 
 	if version.BuildId == "" && initialBuildId > 0 {
 		return &config.CheckResponse{{BuildId: strconv.Itoa(initialBuildId)}}, nil
@@ -48,7 +54,7 @@ func (c checker) Check() (*config.CheckResponse, error) {
 		return nil, fmt.Errorf("could not convert build id '%s' to an int: '%s", version.BuildId, err.Error())
 	}
 
-	builds, err := c.getBuilds(gc.Page{Since: buildId})
+	builds, err := c.getBuilds(gc.Page{Since: buildId, Limit: versionPageSize})
 	if err != nil {
 		return nil, err
 	}

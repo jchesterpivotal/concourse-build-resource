@@ -59,7 +59,7 @@ func TestCheckPkg(t *testing.T) {
 						})
 
 						it("asks to fetch all builds since the given version", func() {
-							gt.Expect(page).To(gomega.Equal(concourse.Page{Since: 111}))
+							gt.Expect(page).To(gomega.Equal(concourse.Page{Since: 111, Limit: 100}))
 						})
 					}, spec.Nested())
 
@@ -184,7 +184,7 @@ func TestCheckPkg(t *testing.T) {
 						})
 
 						it("asks to fetch all builds since the given version", func() {
-							gt.Expect(page).To(gomega.Equal(concourse.Page{Since: 111}))
+							gt.Expect(page).To(gomega.Equal(concourse.Page{Since: 111, Limit: 100}))
 						})
 					}, spec.Nested())
 
@@ -307,7 +307,7 @@ func TestCheckPkg(t *testing.T) {
 						})
 
 						it("asks to fetch all builds since the given version", func() {
-							gt.Expect(page).To(gomega.Equal(concourse.Page{Since: 111}))
+							gt.Expect(page).To(gomega.Equal(concourse.Page{Since: 111, Limit: 100}))
 						})
 					}, spec.Nested())
 
@@ -430,7 +430,7 @@ func TestCheckPkg(t *testing.T) {
 						})
 
 						it("asks to fetch all builds since the given version", func() {
-							gt.Expect(page).To(gomega.Equal(concourse.Page{Since: 111}))
+							gt.Expect(page).To(gomega.Equal(concourse.Page{Since: 111, Limit: 100}))
 						})
 					}, spec.Nested())
 

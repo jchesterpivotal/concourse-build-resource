@@ -15,6 +15,7 @@ Authentication is _not_ supported currently. You will need to make all the jobs 
 * `initial_build_id`: the first build ID to start versions from, if you wish to start from an earlier build than
   the most recent on the target Concourse. Please note that if you set this to a very early version, you may wind
   up adding a  lot of builds for your local Concourse to churn through. (Optional)
+* `fetch_page_size`: the maximum number of builds that can be fetched in a single `check`. (Optional, default 100)
 
 If you leave off `job`, `pipeline` and/or `team`, concourse-build-resource will try to perform checks against whole
 pipelines, or whole teams, or whole Concourse installations, respectively.

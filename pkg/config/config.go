@@ -6,6 +6,7 @@ type Source struct {
 	Pipeline       string `json:"pipeline"`
 	Job            string `json:"job,omitempty"`
 	InitialBuildId int    `json:"initial_build_id,omitempty"`
+	FetchPageSize  int    `json:"fetch_page_size,omitempty"`
 	EnableTracing  bool   `json:"enable_tracing,omitempty"`
 }
 
