@@ -15,9 +15,6 @@ git clone concourse-build-resource-repo updated-tags-repo
 pushd updated-tags-repo
     grep -rl 'tag: v[[:digit:]]\+\.[[:digit:]]\+\.[[:digit:]]\+' . --exclude-dir=.git | xargs sed -i "s/tag: v[[:digit:]]\+\.[[:digit:]]\+\.[[:digit:]]\+/tag: v$version/g"
 
-    git config --global user.name ${GIT_NAME}
-    git config --global user.email ${GIT_EMAIL}
-
     grep -rl 'tag: v[[:digit:]]\+\.[[:digit:]]\+\.[[:digit:]]\+' . --exclude-dir=.git | xargs git add
     git status --verbose
     git commit -m "Update README.md and utility tasks to v$version" \
