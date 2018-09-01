@@ -1,11 +1,12 @@
 package config
 
 type Source struct {
-	ConcourseUrl  string `json:"concourse_url"`
-	Team          string `json:"team"`
-	Pipeline      string `json:"pipeline"`
-	Job           string `json:"job,omitempty"`
-	EnableTracing bool   `json:"enable_tracing,omitempty"`
+	ConcourseUrl   string `json:"concourse_url"`
+	Team           string `json:"team"`
+	Pipeline       string `json:"pipeline"`
+	Job            string `json:"job,omitempty"`
+	InitialBuildId int    `json:"initial_build_id,omitempty"`
+	EnableTracing  bool   `json:"enable_tracing,omitempty"`
 }
 
 type Version struct {

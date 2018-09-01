@@ -30,6 +30,11 @@ type checker struct {
 
 func (c checker) Check() (*config.CheckResponse, error) {
 	version := c.checkRequest.Version
+	initialBuildId := c.checkRequest.Source.InitialBuildId
+
+	if version.BuildId == "" && initialBuildId > 0 {
+		return &config.CheckResponse{{BuildId: strconv.Itoa(initialBuildId)}}, nil
+	}
 
 	if version.BuildId == "" {
 		builds, err := c.getBuilds(singleJobPageSize)

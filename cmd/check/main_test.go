@@ -1,21 +1,21 @@
 package main_test
 
 import (
-	"testing"
 	"github.com/onsi/gomega"
 	"github.com/onsi/gomega/gbytes"
 	"github.com/onsi/gomega/gexec"
 	"github.com/onsi/gomega/ghttp"
 	"github.com/sclevine/spec"
 	"github.com/sclevine/spec/report"
+	"testing"
 
 	"github.com/concourse/atc"
 
-	"os/exec"
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"net/http"
-	"encoding/json"
+	"os/exec"
 )
 
 func TestCheckCmd(t *testing.T) {
@@ -86,6 +86,24 @@ func TestCheckCmd(t *testing.T) {
 
 			it("prints an array of versions to stdout", func() {
 				gt.Eventually(session.Out).Should(gbytes.Say(`[{"build_id":"999"}]`))
+				gt.Eventually(session).Should(gexec.Exit(0))
+			})
+		}, spec.Nested())
+
+		when("version is not given (ie, first run) and initial_build_id is set", func() {
+			gt := gomega.NewGomegaWithT(t)
+			var session *gexec.Session
+
+			it.Before(func() {
+				cmd := exec.Command(compiledPath)
+				input := `{"source":{"concourse_url":"https://ignored.example.com","initial_build_id": 222}}`
+				cmd.Stdin = bytes.NewBufferString(input)
+				session, err = gexec.Start(cmd, it.Out(), it.Out())
+				gt.Expect(err).NotTo(gomega.HaveOccurred())
+			})
+
+			it("returns the initial_build_id as the version", func() {
+				gt.Eventually(session.Out).Should(gbytes.Say(`[{"build_id":"222"}]`))
 				gt.Eventually(session).Should(gexec.Exit(0))
 			})
 		}, spec.Nested())

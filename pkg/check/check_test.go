@@ -532,30 +532,59 @@ func TestCheckPkg(t *testing.T) {
 		}, spec.Nested())
 
 		when("build ID is not defined, meaning this is the first check", func() {
-			gt := gomega.NewGomegaWithT(t)
-			faketeam := new(fakes.FakeTeam)
-			fakeclient := new(fakes.FakeClient)
-			fakeclient.TeamReturns(faketeam)
-			var page concourse.Page
-			source := config.Source{
-				ConcourseUrl: "https://example.com",
-				Team:         "test-team",
-				Pipeline:     "test-pipeline",
-				Job:          "test-job",
-			}
+			when("initial_build_id is not set", func() {
+				gt := gomega.NewGomegaWithT(t)
+				faketeam := new(fakes.FakeTeam)
+				fakeclient := new(fakes.FakeClient)
+				fakeclient.TeamReturns(faketeam)
+				var page concourse.Page
+				source := config.Source{
+					ConcourseUrl: "https://example.com",
+					Team:         "test-team",
+					Pipeline:     "test-pipeline",
+					Job:          "test-job",
+				}
 
-			it.Before(func() {
-				faketeam.JobBuildsReturns([]atc.Build{{ID: 111, Status: string(atc.StatusSucceeded)}}, concourse.Pagination{}, true, nil)
+				it.Before(func() {
+					faketeam.JobBuildsReturns([]atc.Build{{ID: 111, Status: string(atc.StatusSucceeded)}}, concourse.Pagination{}, true, nil)
 
-				checker := check.NewCheckerUsingClient(&config.CheckRequest{Source: source}, fakeclient)
-				_, err := checker.Check()
-				gt.Expect(err).NotTo(gomega.HaveOccurred())
+					checker := check.NewCheckerUsingClient(&config.CheckRequest{Source: source}, fakeclient)
+					_, err := checker.Check()
+					gt.Expect(err).NotTo(gomega.HaveOccurred())
 
-				_, _, page = faketeam.JobBuildsArgsForCall(0)
-			})
+					_, _, page = faketeam.JobBuildsArgsForCall(0)
+				})
 
-			it("only fetches 1 build", func() {
-				gt.Expect(page).To(gomega.Equal(concourse.Page{Limit: 1}))
+				it("only fetches 1 build", func() {
+					gt.Expect(page).To(gomega.Equal(concourse.Page{Limit: 1}))
+				})
+			}, spec.Nested())
+
+			when("initial_build_id has been set", func() {
+				gt := gomega.NewGomegaWithT(t)
+				faketeam := new(fakes.FakeTeam)
+				fakeclient := new(fakes.FakeClient)
+				fakeclient.TeamReturns(faketeam)
+				source := config.Source{
+					ConcourseUrl:   "https://example.com",
+					InitialBuildId: 222,
+				}
+				var response *config.CheckResponse
+				var err error
+
+				it.Before(func() {
+					checker := check.NewCheckerUsingClient(&config.CheckRequest{Source: source}, fakeclient)
+					response, err = checker.Check()
+					gt.Expect(err).NotTo(gomega.HaveOccurred())
+				})
+
+				it("returns that initial_build_id as the first version", func() {
+					gt.Expect(response).To(gomega.Equal(&config.CheckResponse{{BuildId: "222"}}))
+				})
+
+				it("does not bother dialling out to the remote Concourse", func() {
+					gt.Expect(fakeclient.BuildsCallCount()).To(gomega.BeZero())
+				})
 			})
 		}, spec.Nested())
 
