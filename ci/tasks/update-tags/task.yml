@@ -9,5 +9,8 @@ inputs:
 - name: image-version
 - name: concourse-build-resource-repo
 
+outputs:
+- name: updated-tags-repo
+
 run:
   path: concourse-build-resource-repo/ci/tasks/update-tags/run
