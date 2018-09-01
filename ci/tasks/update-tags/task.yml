@@ -12,5 +12,9 @@ inputs:
 outputs:
 - name: updated-tags-repo
 
+params:
+  GIT_NAME:
+  GIT_EMAIL:
+
 run:
   path: concourse-build-resource-repo/ci/tasks/update-tags/run
