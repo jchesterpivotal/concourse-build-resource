@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+
+version=$(cat image-version/version)
+
+echo
+echo Updating tags in README and utility tasks to v${version}
+echo
+
+pushd concourse-build-resource-repo
+    grep -rl 'tag: v[[:digit:]]\+\.[[:digit:]]\+\.[[:digit:]]\+' . --exclude-dir=.git | xargs sed -i "s/tag: v[[:digit:]]\+\.[[:digit:]]\+\.[[:digit:]]\+/tag: v$version/g"
+
+    git config --global user.name "Jacques Chester"
+    git config --global user.email "jchester+githubrobot@pivotal.io"
+    grep -rl 'tag: v[[:digit:]]\+\.[[:digit:]]\+\.[[:digit:]]\+' . --exclude-dir=.git | xargs git add
+    git status --verbose
+    git commit -m "Update README.md and utility tasks to v$version" \
+               -m "This commit is made automatically by the 'shipit' job." \
+               -m "[skip ci]"
+    git --no-pager log -1
+popd
+
+echo
+echo Done.
+echo

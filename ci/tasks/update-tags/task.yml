@@ -1,0 +1,13 @@
+platform: linux
+
+image_resource:
+  type: docker-image
+  source:
+    repository: samueldebruyn/debian-git
+
+inputs:
+- name: image-version
+- name: concourse-build-resource-repo
+
+run:
+  path: concourse-build-resource-repo/ci/tasks/update-tags/run
