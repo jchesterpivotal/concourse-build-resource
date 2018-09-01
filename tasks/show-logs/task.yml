@@ -4,7 +4,7 @@ image_resource:
   type: docker-image
   source:
     repository: jchesterpivotal/concourse-build-resource
-    tag: v0.6.0-rc.14
+    tag: v0.5.0
 
 inputs:
 - name: build
