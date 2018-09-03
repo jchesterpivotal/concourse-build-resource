@@ -2,10 +2,10 @@ package in
 
 import (
 	"github.com/concourse/atc"
+	"github.com/concourse/fly/eventstream"
 	"github.com/jchesterpivotal/concourse-build-resource/pkg/config"
 	"log"
 
-	"github.com/concourse/fly/eventstream"
 	gc "github.com/concourse/go-concourse/concourse"
 
 	"crypto/tls"
@@ -77,44 +77,10 @@ func (i inner) In() (*config.InResponse, error) {
 	i.writeJsonFile(i.addBuildNumberPostfixTo("plan"), "json", plan)
 
 	// events
-	events, err := i.concourseClient.BuildEvents(i.inRequest.Version.BuildId)
-	if err != nil {
-		return nil, fmt.Errorf("error while fetching events for build '%s': '%s", i.inRequest.Version.BuildId, err.Error())
-	}
-	defer events.Close()
-
-	eventsFile, err := os.Create(filepath.Join(i.inRequest.WorkingDirectory, "events.log"))
+	err = i.renderEventsRepetitively(build)
 	if err != nil {
 		return nil, err
 	}
-	defer eventsFile.Close()
-	eventstream.Render(eventsFile, events)
-
-	eventsDetailPostfixed, err := i.concourseClient.BuildEvents(i.inRequest.Version.BuildId)
-	if err != nil {
-		return nil, fmt.Errorf("error while fetching events for build '%s': '%s", i.inRequest.Version.BuildId, err.Error())
-	}
-	defer eventsDetailPostfixed.Close()
-
-	eventsFileDetailPostfixed, err := os.Create(filepath.Join(i.inRequest.WorkingDirectory, fmt.Sprintf("%s.log", i.addDetailedPostfixTo("events", build))))
-	if err != nil {
-		return nil, err
-	}
-	defer eventsFileDetailPostfixed.Close()
-	eventstream.Render(eventsFileDetailPostfixed, eventsDetailPostfixed)
-
-	eventsBuildPostfixed, err := i.concourseClient.BuildEvents(i.inRequest.Version.BuildId)
-	if err != nil {
-		return nil, fmt.Errorf("error while fetching events for build '%s': '%s", i.inRequest.Version.BuildId, err.Error())
-	}
-	defer eventsBuildPostfixed.Close()
-
-	eventsFileBuildPostfixed, err := os.Create(filepath.Join(i.inRequest.WorkingDirectory, fmt.Sprintf("%s.log", i.addBuildNumberPostfixTo("events"))))
-	if err != nil {
-		return nil, err
-	}
-	defer eventsFileBuildPostfixed.Close()
-	eventstream.Render(eventsFileBuildPostfixed, eventsBuildPostfixed)
 
 	// K-V convenience files
 
@@ -235,4 +201,52 @@ func (i inner) writeStringFile(filename string, value string) error {
 	_, err = file.WriteString(value)
 
 	return err
+}
+
+func(i inner) renderEventsRepetitively(build atc.Build) error {
+	events, err := i.concourseClient.BuildEvents(i.inRequest.Version.BuildId)
+	// first, check if we are even authorised
+	if err != nil && err.Error() == "not authorized" {
+		log.Printf("was unauthorized to fetch events for build '%s', no logs will be written.", i.inRequest.Version.BuildId)
+		return nil
+	}
+	if err != nil {
+		return fmt.Errorf("error while fetching events for build '%s': '%s", i.inRequest.Version.BuildId, err.Error())
+	}
+	defer events.Close()
+
+	eventsFile, err := os.Create(filepath.Join(i.inRequest.WorkingDirectory, "events.log"))
+	if err != nil {
+		return err
+	}
+	defer eventsFile.Close()
+	eventstream.Render(eventsFile, events)
+
+	eventsDetailPostfixed, err := i.concourseClient.BuildEvents(i.inRequest.Version.BuildId)
+	if err != nil {
+		return fmt.Errorf("error while fetching events for build '%s': '%s", i.inRequest.Version.BuildId, err.Error())
+	}
+	defer eventsDetailPostfixed.Close()
+
+	eventsFileDetailPostfixed, err := os.Create(filepath.Join(i.inRequest.WorkingDirectory, fmt.Sprintf("%s.log", i.addDetailedPostfixTo("events", build))))
+	if err != nil {
+		return err
+	}
+	defer eventsFileDetailPostfixed.Close()
+	eventstream.Render(eventsFileDetailPostfixed, eventsDetailPostfixed)
+
+	eventsBuildPostfixed, err := i.concourseClient.BuildEvents(i.inRequest.Version.BuildId)
+	if err != nil {
+		return fmt.Errorf("error while fetching events for build '%s': '%s", i.inRequest.Version.BuildId, err.Error())
+	}
+	defer eventsBuildPostfixed.Close()
+
+	eventsFileBuildPostfixed, err := os.Create(filepath.Join(i.inRequest.WorkingDirectory, fmt.Sprintf("%s.log", i.addBuildNumberPostfixTo("events"))))
+	if err != nil {
+		return err
+	}
+	defer eventsFileBuildPostfixed.Close()
+	eventstream.Render(eventsFileBuildPostfixed, eventsBuildPostfixed)
+
+	return nil
 }
