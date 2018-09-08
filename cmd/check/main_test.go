@@ -125,52 +125,15 @@ func TestCheckCmd(t *testing.T) {
 			var session *gexec.Session
 
 			it.Before(func() {
-				server := ghttp.NewServer()
-				server.AppendHandlers(
-					http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-						w.Header().Set("Content-Type", "application/json")
-						w.Header().Add("Link", fmt.Sprintf(`<%s/api/v1/builds?until=334&limit=100>; rel="previous"`, server.URL()))
-
-						json.NewEncoder(w).Encode([]atc.Build{{
-							ID:           210,
-							TeamName:     "t",
-							Name:         "111",
-							Status:       string(atc.StatusSucceeded),
-							JobName:      "j",
-							APIURL:       fmt.Sprintf("%s/api/v1", server.URL()),
-							PipelineName: "p",
-							StartTime:    111222333,
-							EndTime:      444555666,
-							ReapTime:     0,
-						}})
-					}),
-					http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-						w.Header().Set("Content-Type", "application/json")
-
-						json.NewEncoder(w).Encode([]atc.Build{{
-							ID:           210,
-							TeamName:     "t",
-							Name:         "111",
-							Status:       string(atc.StatusSucceeded),
-							JobName:      "j",
-							APIURL:       fmt.Sprintf("%s/api/v1", server.URL()),
-							PipelineName: "p",
-							StartTime:    111222333,
-							EndTime:      444555666,
-							ReapTime:     0,
-						}})
-					}),
-				)
-
 				cmd := exec.Command(compiledPath)
-				input := fmt.Sprintf(`{"source":{"concourse_url":"%s","initial_build_id": 222}}`, server.URL())
+				input := `{"source":{"concourse_url":"https://ignored.example.com","initial_build_id": 222}}`
 				cmd.Stdin = bytes.NewBufferString(input)
 				session, err = gexec.Start(cmd, it.Out(), it.Out())
 				gt.Expect(err).NotTo(gomega.HaveOccurred())
 			})
 
-			it("returns a version array of everything after and including initial_build_id", func() {
-				gt.Eventually(session.Out).Should(gbytes.Say(`[{"build_id":"222"},{"build_id":"333"}]`))
+			it("returns the initial_build_id as the version", func() {
+				gt.Eventually(session.Out).Should(gbytes.Say(`[{"build_id":"222"}]`))
 				gt.Eventually(session).Should(gexec.Exit(0))
 			})
 		}, spec.Nested())

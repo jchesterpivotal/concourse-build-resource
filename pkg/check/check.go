@@ -38,7 +38,11 @@ func (c checker) Check() (*config.CheckResponse, error) {
 		versionPageSize = defaultVersionPageSize
 	}
 
-	if version.BuildId == "" && initialBuildId == 0 {
+	if version.BuildId == "" && initialBuildId > 0 {
+		return &config.CheckResponse{{BuildId: strconv.Itoa(initialBuildId)}}, nil
+	}
+
+	if version.BuildId == "" {
 		builds, err := c.getBuilds(gc.Page{Limit: 1})
 		if err != nil {
 			return nil, err
@@ -50,15 +54,9 @@ func (c checker) Check() (*config.CheckResponse, error) {
 		}, nil
 	}
 
-	var buildId int
-	var err error
-	if initialBuildId == 0 {
-		buildId, err = strconv.Atoi(version.BuildId)
-		if err != nil {
-			return nil, fmt.Errorf("could not convert build id '%s' to an int: '%s", version.BuildId, err.Error())
-		}
-	} else {
-		buildId = initialBuildId
+	buildId, err := strconv.Atoi(version.BuildId)
+	if err != nil {
+		return nil, fmt.Errorf("could not convert build id '%s' to an int: '%s", version.BuildId, err.Error())
 	}
 
 	builds, err := c.getBuilds(gc.Page{Since: buildId, Limit: versionPageSize})
