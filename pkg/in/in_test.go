@@ -87,36 +87,36 @@ func TestInPkg(t *testing.T) {
 				gt.Expect(AFileExistsContaining("build/build.json", `"api_url":"/api/v1/builds/999"`, gt)).To(gomega.BeTrue())
 			})
 
-			it("writes out the build-<team>-<pipeline>-<job>-<build number>.json file", func() {
-				gt.Expect(AFileExistsContaining("build/build-team-pipeline-job-111.json", `"api_url":"/api/v1/builds/999"`, gt)).To(gomega.BeTrue())
+			it("writes out the build-<team>_<pipeline>_<job>_<build number>.json file", func() {
+				gt.Expect(AFileExistsContaining("build/build_team_pipeline_job_111.json", `"api_url":"/api/v1/builds/999"`, gt)).To(gomega.BeTrue())
 			})
 
-			it("writes out the build-<global build number>.json file", func() {
-				gt.Expect(AFileExistsContaining("build/build-999.json", `"api_url":"/api/v1/builds/999"`, gt)).To(gomega.BeTrue())
+			it("writes out the build_<global build number>.json file", func() {
+				gt.Expect(AFileExistsContaining("build/build_999.json", `"api_url":"/api/v1/builds/999"`, gt)).To(gomega.BeTrue())
 			})
 
 			it("writes out the resources.json file", func() {
 				gt.Expect(AFileExistsContaining("build/resources.json", `"inputs":[`, gt)).To(gomega.BeTrue())
 			})
 
-			it("writes out the resources-<team>-<pipeline>-<job>-<build number>.json file", func() {
-				gt.Expect(AFileExistsContaining("build/resources-team-pipeline-job-111.json", `"inputs":[`, gt)).To(gomega.BeTrue())
+			it("writes out the resources_<team>_<pipeline>_<job>_<build number>.json file", func() {
+				gt.Expect(AFileExistsContaining("build/resources_team_pipeline_job_111.json", `"inputs":[`, gt)).To(gomega.BeTrue())
 			})
 
-			it("writes out the resources-<global build number>.json file", func() {
-				gt.Expect(AFileExistsContaining("build/resources-999.json", `"inputs":[`, gt)).To(gomega.BeTrue())
+			it("writes out the resources_<global build number>.json file", func() {
+				gt.Expect(AFileExistsContaining("build/resources_999.json", `"inputs":[`, gt)).To(gomega.BeTrue())
 			})
 
 			it("writes out the plan.json file", func() {
 				gt.Expect(AFileExistsContaining("build/plan.json", `"plan":`, gt)).To(gomega.BeTrue())
 			})
 
-			it("writes out the plan-<team>-<pipeline>-<job>-<build number>.json file", func() {
-				gt.Expect(AFileExistsContaining("build/plan-team-pipeline-job-111.json", `"plan":`, gt)).To(gomega.BeTrue())
+			it("writes out the plan_<team>_<pipeline>_<job>_<build number>.json file", func() {
+				gt.Expect(AFileExistsContaining("build/plan_team_pipeline_job_111.json", `"plan":`, gt)).To(gomega.BeTrue())
 			})
 
-			it("writes out the plan-<global build number>.json file", func() {
-				gt.Expect(AFileExistsContaining("build/plan-999.json", `"plan":`, gt)).To(gomega.BeTrue())
+			it("writes out the plan_<global build number>.json file", func() {
+				gt.Expect(AFileExistsContaining("build/plan_999.json", `"plan":`, gt)).To(gomega.BeTrue())
 			})
 
 			it("adds resource version metadata to JSON files", func() {
@@ -142,12 +142,12 @@ func TestInPkg(t *testing.T) {
 				gt.Expect("build/events.log").To(gomega.BeAnExistingFile())
 			})
 
-			it("writes out the events-<team>-<pipeline>-<job>-<build number>.log", func() {
-				gt.Expect("build/events-team-pipeline-job-111.log").To(gomega.BeAnExistingFile())
+			it("writes out the events_<team>_<pipeline>_<job>_<build number>.log", func() {
+				gt.Expect("build/events_team_pipeline_job_111.log").To(gomega.BeAnExistingFile())
 			})
 
-			it("writes out the events-<global build number>.log", func() {
-				gt.Expect("build/events-999.log").To(gomega.BeAnExistingFile())
+			it("writes out the events_<global build number>.log", func() {
+				gt.Expect("build/events_999.log").To(gomega.BeAnExistingFile())
 			})
 
 			it("writes out build/team", func() {
@@ -162,19 +162,19 @@ func TestInPkg(t *testing.T) {
 				gt.Expect(AFileExistsContaining("build/job", "job", gt)).To(gomega.BeTrue())
 			})
 
-			it("writes out build/job-number", func() {
+			it("writes out build/job_number", func() {
 				gt.Expect(AFileExistsContaining("build/job_number", "111", gt)).To(gomega.BeTrue())
 			})
 
-			it("writes out build/global-number", func() {
+			it("writes out build/global_number", func() {
 				gt.Expect(AFileExistsContaining("build/global_number", "999", gt)).To(gomega.BeTrue())
 			})
 
-			it("writes out build/started-time", func() {
+			it("writes out build/started_time", func() {
 				gt.Expect(AFileExistsContaining("build/started_time", "1010101010", gt)).To(gomega.BeTrue())
 			})
 
-			it("writes out build/ended-time", func() {
+			it("writes out build/ended_time", func() {
 				gt.Expect(AFileExistsContaining("build/ended_time", "1191919191", gt)).To(gomega.BeTrue())
 			})
 

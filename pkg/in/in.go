@@ -169,7 +169,7 @@ func (i inner) buildUrl(build atc.Build) string {
 
 func (i inner) addDetailedPostfixTo(name string, build atc.Build) string {
 	return fmt.Sprintf(
-		"%s-%s-%s-%s-%s",
+		"%s_%s_%s_%s_%s",
 		name,
 		build.TeamName,
 		build.PipelineName,
@@ -178,7 +178,7 @@ func (i inner) addDetailedPostfixTo(name string, build atc.Build) string {
 }
 
 func (i inner) addBuildNumberPostfixTo(name string) string {
-	return fmt.Sprintf("%s-%s", name, i.inRequest.Version.BuildId)
+	return fmt.Sprintf("%s_%s", name, i.inRequest.Version.BuildId)
 }
 
 func (i inner) writeJsonFile(filename string, extension string, object interface{}) error {
