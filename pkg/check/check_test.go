@@ -726,19 +726,64 @@ func TestCheckPkg(t *testing.T) {
 				var response *config.CheckResponse
 				var err error
 
-				it.Before(func() {
-					checker := check.NewCheckerUsingClient(&config.CheckRequest{Source: source}, fakeclient)
-					response, err = checker.Check()
-					gt.Expect(err).NotTo(gomega.HaveOccurred())
-				})
+				when("Concourse responds with versions including the initial_build_id", func() {
+					it.Before(func() {
+						fakeclient.BuildsReturnsOnCall(0,
+							[]atc.Build{},
+							concourse.Pagination{Previous: &concourse.Page{Since: 111}},
+							nil)
 
-				it("returns that initial_build_id as the first version", func() {
-					gt.Expect(response).To(gomega.Equal(&config.CheckResponse{{BuildId: "222"}}))
-				})
+						fakeclient.BuildsReturnsOnCall(1,
+							[]atc.Build{
+								{ID: 999, Status: string(atc.StatusFailed)},
+								{ID: 555, Status: string(atc.StatusSucceeded)},
+								{ID: 222, Status: string(atc.StatusSucceeded)},
+							},
+							concourse.Pagination{},
+							nil)
 
-				it("does not bother dialling out to the remote Concourse", func() {
-					gt.Expect(fakeclient.BuildsCallCount()).To(gomega.BeZero())
-				})
+						checker := check.NewCheckerUsingClient(&config.CheckRequest{
+							Version: config.Version{BuildId: "222"},
+							Source:  source,
+						}, fakeclient)
+						response, err = checker.Check()
+						gt.Expect(err).NotTo(gomega.HaveOccurred())
+
+					})
+
+					it("returns responses since and including the initial_build_id", func() {
+						gt.Expect(response).To(gomega.Equal(&config.CheckResponse{{BuildId: "222"}, {BuildId: "555"}, {BuildId: "999"}}))
+					})
+				}, spec.Nested())
+
+				when("Concourse responds with versions that don't include the initial_build_id", func() {
+					it.Before(func() {
+						fakeclient.BuildsReturnsOnCall(0,
+							[]atc.Build{},
+							concourse.Pagination{Previous: &concourse.Page{Since: 111}},
+							nil)
+
+						fakeclient.BuildsReturnsOnCall(1,
+							[]atc.Build{
+								{ID: 999, Status: string(atc.StatusFailed)},
+								{ID: 555, Status: string(atc.StatusSucceeded)},
+							},
+							concourse.Pagination{},
+							nil)
+
+						checker := check.NewCheckerUsingClient(&config.CheckRequest{
+							Version: config.Version{BuildId: "222"},
+							Source:  source,
+						}, fakeclient)
+						response, err = checker.Check()
+						gt.Expect(err).NotTo(gomega.HaveOccurred())
+
+					})
+
+					it("returns responses since initial_build_id", func() {
+						gt.Expect(response).To(gomega.Equal(&config.CheckResponse{{BuildId: "555"}, {BuildId: "999"}}))
+					})
+				}, spec.Nested())
 			})
 		}, spec.Nested())
 
