@@ -67,11 +67,41 @@ func TestCheckCmd(t *testing.T) {
 
 			it.Before(func() {
 				server = ghttp.NewServer()
-				server.AppendHandlers(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-					w.Header().Set("Content-Type", "application/json")
+				server.AppendHandlers(
+					http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+						w.Header().Set("Content-Type", "application/json")
+						w.Header().Add("Link", fmt.Sprintf(`<%s/api/v1/teams/t/pipelines/p/jobs/j/builds?until=211&limit=100>; rel="previous"`, server.URL()))
 
-					json.NewEncoder(w).Encode([]atc.Build{{ID: 999, Status: string(atc.StatusSucceeded)}})
-				}))
+						json.NewEncoder(w).Encode([]atc.Build{{
+							ID:           210,
+							TeamName:     "t",
+							Name:         "111",
+							Status:       string(atc.StatusSucceeded),
+							JobName:      "j",
+							APIURL:       fmt.Sprintf("%s/api/v1", server.URL()),
+							PipelineName: "p",
+							StartTime:    111222333,
+							EndTime:      444555666,
+							ReapTime:     0,
+						}})
+					}),
+					http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+						w.Header().Set("Content-Type", "application/json")
+
+						json.NewEncoder(w).Encode([]atc.Build{{
+							ID:           210,
+							TeamName:     "t",
+							Name:         "111",
+							Status:       string(atc.StatusSucceeded),
+							JobName:      "j",
+							APIURL:       fmt.Sprintf("%s/api/v1", server.URL()),
+							PipelineName: "p",
+							StartTime:    111222333,
+							EndTime:      444555666,
+							ReapTime:     0,
+						}})
+					}),
+				)
 
 				cmd := exec.Command(compiledPath)
 				input := fmt.Sprintf(`{"version":{"build_id":"111"},"source":{"concourse_url":"%s","team":"t","pipeline":"p","job":"j"}}`, server.URL())
@@ -85,7 +115,7 @@ func TestCheckCmd(t *testing.T) {
 			})
 
 			it("prints an array of versions to stdout", func() {
-				gt.Eventually(session.Out).Should(gbytes.Say(`[{"build_id":"999"}]`))
+				gt.Eventually(session.Out).Should(gbytes.Say(`[{"build_id":"210"}]`))
 				gt.Eventually(session).Should(gexec.Exit(0))
 			})
 		}, spec.Nested())

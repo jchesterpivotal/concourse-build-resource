@@ -108,48 +108,111 @@ func (c checker) getBuilds(initialPage gc.Page) ([]atc.Build, error) {
 	team := c.checkRequest.Source.Team
 	pipeline := c.checkRequest.Source.Pipeline
 	job := c.checkRequest.Source.Job
-	var builds []atc.Build
+	builds := make([]atc.Build, 0)
+	pageBuilds := make([]atc.Build, 0)
 	var pagination gc.Pagination
 	var found bool
 	var err error
 
-	if job == "" && pipeline == "" && team == "" {
-		_, pagination, err = c.concourseClient.Builds(initialPage)
-		if err != nil {
-			return nil, fmt.Errorf("could not retrieve builds for concourse URL '%s': %s", concourseUrl, err.Error())
+	// latest version only case
+	if initialPage.Limit == 1 {
+		if job == "" && pipeline == "" && team == "" {
+			builds, _, err = c.concourseClient.Builds(initialPage)
+			if err != nil {
+				return nil, fmt.Errorf("could not retrieve builds for concourse URL '%s': %s", concourseUrl, err.Error())
+			}
+		} else if job == "" && pipeline == "" {
+			builds, _, err = c.concourseTeam.Builds(initialPage)
+			if err != nil {
+				return nil, fmt.Errorf("could not retrieve builds for team '%s': %s", team, err.Error())
+			}
+		} else if job == "" {
+			builds, _, found, err = c.concourseTeam.PipelineBuilds(pipeline, initialPage)
+			if err != nil {
+				return nil, fmt.Errorf("could not retrieve builds for pipeline '%s': %s", pipeline, err.Error())
+			}
+			if !found {
+				return nil, fmt.Errorf("server could not find pipeline '%s'", pipeline)
+			}
+		} else {
+			builds, _, found, err = c.concourseTeam.JobBuilds(pipeline, job, initialPage)
+			if err != nil {
+				return nil, fmt.Errorf("could not retrieve builds for pipeline/job '%s/%s': %s", pipeline, job, err.Error())
+			}
+			if !found {
+				return nil, fmt.Errorf("server could not find pipeline/job '%s/%s'", pipeline, job)
+			}
 		}
-
-		builds = []atc.Build{}
-		var pageBuilds []atc.Build
-		for pagination.Previous != nil {
-			pageBuilds, pagination, err = c.concourseClient.Builds(*pagination.Previous)
+	} else {
+		// versions-since or initial_build_id cases
+		if job == "" && pipeline == "" && team == "" {
+			_, pagination, err = c.concourseClient.Builds(initialPage)
 			if err != nil {
 				return nil, fmt.Errorf("could not retrieve builds for concourse URL '%s': %s", concourseUrl, err.Error())
 			}
 
-			builds = append(pageBuilds, builds...)
-		}
+			for pagination.Previous != nil {
+				pageBuilds, pagination, err = c.concourseClient.Builds(*pagination.Previous)
+				if err != nil {
+					return nil, fmt.Errorf("could not retrieve builds for concourse URL '%s': %s", concourseUrl, err.Error())
+				}
 
-	} else if job == "" && pipeline == "" {
-		builds, _, err = c.concourseTeam.Builds(initialPage)
-		if err != nil {
-			return nil, fmt.Errorf("could not retrieve builds for team '%s': %s", team, err.Error())
-		}
-	} else if job == "" {
-		builds, _, found, err = c.concourseTeam.PipelineBuilds(pipeline, initialPage)
-		if err != nil {
-			return nil, fmt.Errorf("could not retrieve builds for pipeline '%s': %s", pipeline, err.Error())
-		}
-		if !found {
-			return nil, fmt.Errorf("server could not find pipeline '%s'", pipeline)
-		}
-	} else {
-		builds, _, found, err = c.concourseTeam.JobBuilds(pipeline, job, initialPage)
-		if err != nil {
-			return nil, fmt.Errorf("could not retrieve builds for pipeline/job '%s/%s': %s", pipeline, job, err.Error())
-		}
-		if !found {
-			return nil, fmt.Errorf("server could not find pipeline/job '%s/%s'", pipeline, job)
+				builds = append(pageBuilds, builds...)
+			}
+		} else if job == "" && pipeline == "" {
+			_, pagination, err = c.concourseTeam.Builds(initialPage)
+			if err != nil {
+				return nil, fmt.Errorf("could not retrieve builds for team '%s': %s", team, err.Error())
+			}
+
+			for pagination.Previous != nil {
+				pageBuilds, pagination, err = c.concourseTeam.Builds(*pagination.Previous)
+				if err != nil {
+					return nil, fmt.Errorf("could not retrieve builds for concourse URL '%s': %s", concourseUrl, err.Error())
+				}
+
+				builds = append(pageBuilds, builds...)
+			}
+		} else if job == "" {
+			_, pagination, found, err = c.concourseTeam.PipelineBuilds(pipeline, initialPage)
+			if err != nil {
+				return nil, fmt.Errorf("could not retrieve builds for pipeline '%s': %s", pipeline, err.Error())
+			}
+			if !found {
+				return nil, fmt.Errorf("server could not find pipeline '%s'", pipeline)
+			}
+
+			for pagination.Previous != nil {
+				pageBuilds, pagination, found, err = c.concourseTeam.PipelineBuilds(pipeline, *pagination.Previous)
+				if err != nil {
+					return nil, fmt.Errorf("could not retrieve builds for concourse URL '%s': %s", concourseUrl, err.Error())
+				}
+				if !found {
+					return nil, fmt.Errorf("server could not find pipeline '%s'", pipeline)
+				}
+
+				builds = append(pageBuilds, builds...)
+			}
+		} else {
+			_, pagination, found, err = c.concourseTeam.JobBuilds(pipeline, job, initialPage)
+			if err != nil {
+				return nil, fmt.Errorf("could not retrieve builds for pipeline/job '%s/%s': %s", pipeline, job, err.Error())
+			}
+			if !found {
+				return nil, fmt.Errorf("server could not find pipeline/job '%s/%s'", pipeline, job)
+			}
+
+			for pagination.Previous != nil {
+				pageBuilds, pagination, found, err = c.concourseTeam.JobBuilds(pipeline, job, *pagination.Previous)
+				if err != nil {
+					return nil, fmt.Errorf("could not retrieve builds for pipeline/job '%s/%s': %s", pipeline, job, err.Error())
+				}
+				if !found {
+					return nil, fmt.Errorf("server could not find pipeline/job '%s/%s'", pipeline, job)
+				}
+
+				builds = append(pageBuilds, builds...)
+			}
 		}
 	}
 
