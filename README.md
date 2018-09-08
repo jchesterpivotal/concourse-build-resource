@@ -44,9 +44,10 @@ Will produce a number of files in the resource directory.
 There are two variations.
 
 * Detailed: Team, pipeline, job and job number are embedded in the filename.
-  For example: `build-teamname-pipelinename-jobname-123.json`.
+  For example: `build_teamname_pipelinename_jobname_123.json`. Files use snake_case to create distinction with
+  the kebab-case commonly used for pipeline and job names.
 * Global build number: The global build number (unique across the Concourse instance) is embedded in the filename.
-  For example: `build-9876.json`
+  For example: `build_9876.json`
 
 This feature is intended to make it easier to `put` into blobstores using globs or regexps.
 
@@ -71,6 +72,22 @@ Basic build data is extracted out of `build.json` and turned into individual fil
 * `pipeline_url`: the URL pointing to the pipeline the job belongs to.
 * `job_url`: the URL pointing to the job the build belongs to.
 * `build_url`: the full build URL for this build.
+
+### in metadata
+
+The resource injects metadata about itself into each JSON file under the `concourse_build_resource` key:
+
+* `release`: The release version of the resource.
+* `git_ref`: A shortref for the git commit the resource was built from.
+* `get_timestamp`: A timestamp for when the actual `get` step (ie, the execution of `in`) took place. The timestamp
+  is generated during the launch of `in` -- it reflects the start time of fetching data, not the end time. It also
+  makes no attempt to be clever about timezones, so keep an eye out for those unwanted epoch dates.
+
+For consistency, these individual files contain the same information as the metadata injected into JSON:
+
+* `concourse_build_resource_release`: Same information as `release` in the JSON files.
+* `concourse_build_resource_git_ref`: Same information as `git_ref` in the JSON files.
+* `concourse_build_resource_get_timestamp`: Same information as the `get_timestamp` in the JSON files.
 
 ### Warning
 
