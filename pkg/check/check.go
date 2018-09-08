@@ -103,27 +103,40 @@ func NewCheckerUsingClient(input *config.CheckRequest, client gc.Client) Checker
 	}
 }
 
-func (c checker) getBuilds(page gc.Page) ([]atc.Build, error) {
+func (c checker) getBuilds(initialPage gc.Page) ([]atc.Build, error) {
 	concourseUrl := c.checkRequest.Source.ConcourseUrl
 	team := c.checkRequest.Source.Team
 	pipeline := c.checkRequest.Source.Pipeline
 	job := c.checkRequest.Source.Job
 	var builds []atc.Build
+	var pagination gc.Pagination
 	var found bool
 	var err error
 
 	if job == "" && pipeline == "" && team == "" {
-		builds, _, err = c.concourseClient.Builds(page)
+		_, pagination, err = c.concourseClient.Builds(initialPage)
 		if err != nil {
 			return nil, fmt.Errorf("could not retrieve builds for concourse URL '%s': %s", concourseUrl, err.Error())
 		}
+
+		builds = []atc.Build{}
+		var pageBuilds []atc.Build
+		for pagination.Previous != nil {
+			pageBuilds, pagination, err = c.concourseClient.Builds(*pagination.Previous)
+			if err != nil {
+				return nil, fmt.Errorf("could not retrieve builds for concourse URL '%s': %s", concourseUrl, err.Error())
+			}
+
+			builds = append(pageBuilds, builds...)
+		}
+
 	} else if job == "" && pipeline == "" {
-		builds, _, err = c.concourseTeam.Builds(page)
+		builds, _, err = c.concourseTeam.Builds(initialPage)
 		if err != nil {
 			return nil, fmt.Errorf("could not retrieve builds for team '%s': %s", team, err.Error())
 		}
 	} else if job == "" {
-		builds, _, found, err = c.concourseTeam.PipelineBuilds(pipeline, page)
+		builds, _, found, err = c.concourseTeam.PipelineBuilds(pipeline, initialPage)
 		if err != nil {
 			return nil, fmt.Errorf("could not retrieve builds for pipeline '%s': %s", pipeline, err.Error())
 		}
@@ -131,7 +144,7 @@ func (c checker) getBuilds(page gc.Page) ([]atc.Build, error) {
 			return nil, fmt.Errorf("server could not find pipeline '%s'", pipeline)
 		}
 	} else {
-		builds, _, found, err = c.concourseTeam.JobBuilds(pipeline, job, page)
+		builds, _, found, err = c.concourseTeam.JobBuilds(pipeline, job, initialPage)
 		if err != nil {
 			return nil, fmt.Errorf("could not retrieve builds for pipeline/job '%s/%s': %s", pipeline, job, err.Error())
 		}

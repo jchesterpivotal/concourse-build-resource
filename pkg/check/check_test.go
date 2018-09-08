@@ -410,10 +410,17 @@ func TestCheckPkg(t *testing.T) {
 						var page concourse.Page
 
 						it.Before(func() {
-							fakeclient.BuildsReturns([]atc.Build{
-								{ID: 999, Status: string(atc.StatusFailed)},
-								{ID: 555, Status: string(atc.StatusSucceeded)},
-							}, concourse.Pagination{}, nil)
+							fakeclient.BuildsReturnsOnCall(0,
+								[]atc.Build{},
+								concourse.Pagination{Previous: &concourse.Page{Since: 999}},
+								nil)
+
+							fakeclient.BuildsReturnsOnCall(1,
+								[]atc.Build{
+									{ID: 999, Status: string(atc.StatusFailed)},
+									{ID: 555, Status: string(atc.StatusSucceeded)}},
+								concourse.Pagination{},
+								nil)
 
 							checker := check.NewCheckerUsingClient(&config.CheckRequest{
 								Version: config.Version{BuildId: "111"},
@@ -429,8 +436,9 @@ func TestCheckPkg(t *testing.T) {
 							gt.Expect(response).To(gomega.Equal(&config.CheckResponse{{BuildId: "555"}, {BuildId: "999"}}))
 						})
 
-						it("asks to fetch all builds since the given version", func() {
+						it("uses pagination to get all builds since the given version", func() {
 							gt.Expect(page).To(gomega.Equal(concourse.Page{Since: 111, Limit: 100}))
+							gt.Expect(fakeclient.BuildsArgsForCall(1)).To(gomega.Equal(concourse.Page{Since: 999}))
 						})
 					}, spec.Nested())
 
@@ -438,11 +446,21 @@ func TestCheckPkg(t *testing.T) {
 						gt := gomega.NewGomegaWithT(t)
 
 						it.Before(func() {
-							fakeclient.BuildsReturns([]atc.Build{
-								{ID: 555, Status: string(atc.StatusSucceeded)},
-								{ID: 777, Status: string(atc.StatusStarted)},
-								{ID: 999, Status: string(atc.StatusPending)},
-							}, concourse.Pagination{}, nil)
+							fakeclient.BuildsReturnsOnCall(0,
+								[]atc.Build{},
+								concourse.Pagination{Previous: &concourse.Page{Since: 999},
+								},
+								nil)
+
+							fakeclient.BuildsReturnsOnCall(1,
+								[]atc.Build{
+									{ID: 555, Status: string(atc.StatusSucceeded)},
+									{ID: 777, Status: string(atc.StatusStarted)},
+									{ID: 999, Status: string(atc.StatusPending)},
+								},
+								concourse.Pagination{},
+								nil)
+
 
 							checker := check.NewCheckerUsingClient(&config.CheckRequest{
 								Version: config.Version{BuildId: "111"},
@@ -461,10 +479,19 @@ func TestCheckPkg(t *testing.T) {
 						gt := gomega.NewGomegaWithT(t)
 
 						it.Before(func() {
-							fakeclient.BuildsReturns([]atc.Build{
-								{ID: 777, Status: string(atc.StatusStarted)},
-								{ID: 999, Status: string(atc.StatusPending)},
-							}, concourse.Pagination{}, nil)
+							fakeclient.BuildsReturnsOnCall(0,
+								[]atc.Build{},
+								concourse.Pagination{Previous: &concourse.Page{Since: 999},
+								},
+								nil)
+
+							fakeclient.BuildsReturnsOnCall(1,
+								[]atc.Build{
+									{ID: 777, Status: string(atc.StatusStarted)},
+									{ID: 999, Status: string(atc.StatusPending)},
+								},
+								concourse.Pagination{},
+								nil)
 
 							checker := check.NewCheckerUsingClient(&config.CheckRequest{
 								Version: config.Version{BuildId: "111"},
@@ -484,9 +511,16 @@ func TestCheckPkg(t *testing.T) {
 					gt := gomega.NewGomegaWithT(t)
 
 					it.Before(func() {
-						fakeclient.BuildsReturns([]atc.Build{
-							{ID: 999, Status: string(atc.StatusSucceeded)},
-						}, concourse.Pagination{}, nil)
+						fakeclient.BuildsReturnsOnCall(0,
+							[]atc.Build{},
+							concourse.Pagination{Previous: &concourse.Page{Since: 999}},
+							nil)
+
+						fakeclient.BuildsReturnsOnCall(1,
+							[]atc.Build{
+								{ID: 999, Status: string(atc.StatusSucceeded)}},
+							concourse.Pagination{},
+							nil)
 
 						checker := check.NewCheckerUsingClient(&config.CheckRequest{
 							Version: config.Version{BuildId: "999"},
