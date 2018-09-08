@@ -20,14 +20,14 @@ resources: #####################################################################
     username: jchesterpivotal
     password: ((dockerhub-password))
 
-- name: image-version
+- name: release-version
   type: semver
   source:
     driver: gcs
     bucket: ((gcs-bucket-name))
     key: concourse-build-resource-version
     json_key: ((gcp-service-account-json-key))
-    initial_version: 0.6.0-rc1
+    initial_version: 0.8.0-rc.2
 
 - name: github-release
   type: github-release
@@ -56,16 +56,16 @@ jobs: ##########################################################################
       trigger: true
       version: every
       passed: [test]
-    - put: image-version
+    - put: release-version
       params: { pre: rc }
   - task: build-binaries
     file: concourse-build-resource-repo/ci/tasks/build/task.yml
-    input_mapping: { version: image-version }
+    input_mapping: { version: release-version }
   - put: release-image
     params:
       dockerfile: concourse-build-resource-repo/ci/Dockerfile
       build: .
-      tag_file: image-version/version
+      tag_file: release-version/version
       tag_as_latest: false
       tag_prefix: v
 
@@ -79,7 +79,7 @@ jobs: ##########################################################################
     - get: release-image
       passed: [build-image]
       params: {save: true}
-    - get: image-version
+    - get: release-version
       passed: [build-image]
       params: { bump: final }
 
@@ -98,26 +98,26 @@ jobs: ##########################################################################
     - put: release-image
       params:
         load: release-image
-        tag_file: image-version/version
+        tag_file: release-version/version
         tag_as_latest: true
         tag_prefix: v
-    - put: image-version
-      params: { file: image-version/version }
+    - put: release-version
+      params: { file: release-version/version }
     - put: github-release
       params:
-        name: image-version/version
-        tag: image-version/version
+        name: release-version/version
+        tag: release-version/version
         commitish: concourse-build-resource-repo/.git/ref
         tag_prefix: v
 
 - name: bump-patch-version
   public: true
   plan:
-  - put: image-version
+  - put: release-version
     params: { bump: patch }
 
 - name: bump-minor-version
   public: true
   plan:
-  - put: image-version
+  - put: release-version
     params: { bump: minor }
