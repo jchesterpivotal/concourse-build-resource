@@ -10,16 +10,21 @@ export GO111MODULE=on
 export GOOS=linux
 export GOARCH=amd64
 
-pushd concourse-build-resource-repo
-    go build -mod=vendor -o ../binaries/check            cmd/check/main.go
-    go build -mod=vendor -o ../binaries/in               cmd/in/main.go
+export RELEASE_VERSION=$(cat version/version)
+export RELEASE_GIT_REF=$(cat concourse-build-resource-repo/.git/short_ref)
 
+pushd concourse-build-resource-repo
     go build -mod=vendor -o ../binaries/build-pass-fail  cmd/build-pass-fail/main.go
 
     go build -mod=vendor -o ../binaries/show-build       cmd/show-build/main.go
     go build -mod=vendor -o ../binaries/show-plan        cmd/show-plan/main.go
     go build -mod=vendor -o ../binaries/show-resources   cmd/show-resources/main.go
     go build -mod=vendor -o ../binaries/show-logs        cmd/show-logs/main.go
+
+    go build -mod=vendor -o ../binaries/check            cmd/check/main.go
+    go build -mod=vendor \
+        -ldflags "-X main.releaseVersion=$RELEASE_VERSION -X main.releaseGitRef=$RELEASE_GIT_REF" \
+        -o ../binaries/in cmd/in/main.go
 popd
 
 echo Done.

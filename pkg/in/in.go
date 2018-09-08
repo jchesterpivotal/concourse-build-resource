@@ -1,15 +1,17 @@
 package in
 
 import (
+	"encoding/json"
 	"github.com/concourse/atc"
 	"github.com/concourse/fly/eventstream"
 	"github.com/jchesterpivotal/concourse-build-resource/pkg/config"
+	"io/ioutil"
 	"log"
+	"strings"
 
 	gc "github.com/concourse/go-concourse/concourse"
 
 	"crypto/tls"
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"os"
@@ -97,6 +99,9 @@ func (i inner) In() (*config.InResponse, error) {
 	i.writeStringFile("pipeline_url", i.pipelineUrl(build))
 	i.writeStringFile("job_url", i.jobUrl(build))
 	i.writeStringFile("build_url", i.buildUrl(build))
+	i.writeStringFile("concourse_build_resource_release", i.inRequest.ReleaseVersion)
+	i.writeStringFile("concourse_build_resource_git_ref", i.inRequest.ReleaseGitRef)
+	i.writeStringFile("concourse_build_resource_get_timestamp", strconv.Itoa(int(i.inRequest.GetTimestamp)))
 
 	return &config.InResponse{
 		Version: i.inRequest.Version,
@@ -177,15 +182,20 @@ func (i inner) addBuildNumberPostfixTo(name string) string {
 }
 
 func (i inner) writeJsonFile(filename string, extension string, object interface{}) error {
-	file, err := os.Create(filepath.Join(i.inRequest.WorkingDirectory, fmt.Sprintf("%s.%s", filename, extension)))
-	defer file.Close()
-	if err != nil {
-		return err
-	}
+	builder := &strings.Builder{}
 
-	err = json.NewEncoder(file).Encode(object)
+	err := json.NewEncoder(builder).Encode(object)
 	if err != nil {
 		return fmt.Errorf("could not encode response from server into '%s': %s", filename, err.Error())
+	}
+
+	getMetadataStr := fmt.Sprintf(`{"concourse_build_resource":{"release":"%s","git_ref":"%s","get_timestamp":%d},`, i.inRequest.ReleaseVersion, i.inRequest.ReleaseGitRef, i.inRequest.GetTimestamp)
+	jsonStr := builder.String()
+	jsonStr = strings.Replace(jsonStr, "{", getMetadataStr, 1)
+
+	err = ioutil.WriteFile(filepath.Join(i.inRequest.WorkingDirectory, fmt.Sprintf("%s.%s", filename, extension)), []byte(jsonStr), os.ModePerm)
+	if err != nil {
+		return err
 	}
 
 	return nil
@@ -203,7 +213,7 @@ func (i inner) writeStringFile(filename string, value string) error {
 	return err
 }
 
-func(i inner) renderEventsRepetitively(build atc.Build) error {
+func (i inner) renderEventsRepetitively(build atc.Build) error {
 	events, err := i.concourseClient.BuildEvents(i.inRequest.Version.BuildId)
 	// first, check if we are even authorised
 	if err != nil && err.Error() == "not authorized" {

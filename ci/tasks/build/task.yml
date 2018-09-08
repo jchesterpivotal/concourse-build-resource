@@ -8,6 +8,7 @@ image_resource:
 
 inputs:
 - name: concourse-build-resource-repo
+- name: version
 
 outputs:
 - name: binaries

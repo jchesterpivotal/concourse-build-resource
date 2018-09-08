@@ -60,6 +60,7 @@ jobs: ##########################################################################
       params: { pre: rc }
   - task: build-binaries
     file: concourse-build-resource-repo/ci/tasks/build/task.yml
+    input_mapping: { version: image-version }
   - put: release-image
     params:
       dockerfile: concourse-build-resource-repo/ci/Dockerfile

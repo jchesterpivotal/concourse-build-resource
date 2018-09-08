@@ -3,10 +3,16 @@ package main
 import (
 	"github.com/jchesterpivotal/concourse-build-resource/pkg/config"
 	"github.com/jchesterpivotal/concourse-build-resource/pkg/in"
+	"time"
 
 	"encoding/json"
-	"os"
 	"log"
+	"os"
+)
+
+var (
+	releaseVersion = "unknown"
+	releaseGitRef  = "unknown"
 )
 
 func main() {
@@ -17,6 +23,9 @@ func main() {
 	}
 
 	request.WorkingDirectory = os.Args[1]
+	request.ReleaseVersion = releaseVersion
+	request.ReleaseGitRef = releaseGitRef
+	request.GetTimestamp = time.Now().UTC().Unix()
 
 	inResponse, err := in.NewInner(&request).In()
 	if err != nil {

@@ -1,22 +1,22 @@
 package in_test
 
 import (
-	"testing"
-	"github.com/sclevine/spec"
-	"github.com/sclevine/spec/report"
-	"github.com/onsi/gomega"
 	fakes "github.com/concourse/go-concourse/concourse/concoursefakes"
 	"github.com/concourse/go-concourse/concourse/eventstream/eventstreamfakes"
+	"github.com/onsi/gomega"
+	"github.com/sclevine/spec"
+	"github.com/sclevine/spec/report"
+	"testing"
 
 	"github.com/jchesterpivotal/concourse-build-resource/pkg/config"
 	"github.com/jchesterpivotal/concourse-build-resource/pkg/in"
 
 	"github.com/concourse/atc"
 
-	"os"
-	"io"
 	"fmt"
+	"io"
 	"io/ioutil"
+	"os"
 )
 
 func TestInPkg(t *testing.T) {
@@ -67,6 +67,9 @@ func TestInPkg(t *testing.T) {
 					Version:          config.Version{BuildId: "999"},
 					Params:           config.InParams{},
 					WorkingDirectory: "build",
+					ReleaseVersion:   "v0.99.11",
+					ReleaseGitRef:    "abcdef1234567890",
+					GetTimestamp:     1234567890,
 				}, fakeclient)
 				response, err = inner.In()
 				gt.Expect(err).NotTo(gomega.HaveOccurred())
@@ -77,7 +80,7 @@ func TestInPkg(t *testing.T) {
 			})
 
 			it("returns metadata with the build URL", func() {
-				gt.Expect(response.Metadata).To(gomega.ContainElement(config.VersionMetadataField{Name:"build_url", Value: "https://example.com/teams/team/pipelines/pipeline/jobs/job/builds/111"}))
+				gt.Expect(response.Metadata).To(gomega.ContainElement(config.VersionMetadataField{Name: "build_url", Value: "https://example.com/teams/team/pipelines/pipeline/jobs/job/builds/111"}))
 			})
 
 			it("writes out the build.json file", func() {
@@ -114,6 +117,24 @@ func TestInPkg(t *testing.T) {
 
 			it("writes out the plan-<global build number>.json file", func() {
 				gt.Expect(AFileExistsContaining("build/plan-999.json", `"plan":`, gt)).To(gomega.BeTrue())
+			})
+
+			it("adds resource version metadata to JSON files", func() {
+				gt.Expect(AFileExistsContaining("build/build.json", `"concourse_build_resource":{"release":"v0.99.11","git_ref":"abcdef1234567890","get_timestamp":1234567890},`, gt)).To(gomega.BeTrue())
+				gt.Expect(AFileExistsContaining("build/plan.json", `"concourse_build_resource":{"release":"v0.99.11","git_ref":"abcdef1234567890","get_timestamp":1234567890},`, gt)).To(gomega.BeTrue())
+				gt.Expect(AFileExistsContaining("build/resources.json", `"concourse_build_resource":{"release":"v0.99.11","git_ref":"abcdef1234567890","get_timestamp":1234567890},`, gt)).To(gomega.BeTrue())
+			})
+
+			it("writes out a concourse_build_resource_release file", func() {
+				gt.Expect(AFileExistsContaining("build/concourse_build_resource_release", "v0.99.11", gt)).To(gomega.BeTrue())
+			})
+
+			it("writes out a concourse_build_resource_git_ref file", func() {
+				gt.Expect(AFileExistsContaining("build/concourse_build_resource_git_ref", "abcdef1234567890", gt)).To(gomega.BeTrue())
+			})
+
+			it("writes out a concourse_build_resource_get_timestamp file", func() {
+				gt.Expect(AFileExistsContaining("build/concourse_build_resource_get_timestamp", "1234567890", gt)).To(gomega.BeTrue())
 			})
 
 			// TODO: Tests for logs are less rigorous because mocking up the event streams is a PITA.

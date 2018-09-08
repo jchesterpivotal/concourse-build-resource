@@ -26,6 +26,9 @@ type InRequest struct {
 	Version          Version  `json:"version"`
 	Params           InParams `json:"params,omitempty"`
 	WorkingDirectory string   `json:"working_directory,omitempty"`
+	ReleaseVersion   string
+	ReleaseGitRef    string
+	GetTimestamp     int64
 }
 
 type InResponse struct {
