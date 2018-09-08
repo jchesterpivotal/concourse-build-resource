@@ -6,7 +6,7 @@ image_resource:
     repository: samueldebruyn/debian-git
 
 inputs:
-- name: image-version
+- name: release-version
 - name: concourse-build-resource-repo
 
 outputs:

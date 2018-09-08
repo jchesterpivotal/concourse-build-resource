@@ -4,7 +4,7 @@ set -o errexit
 set -o nounset
 set -o pipefail
 
-version=$(cat image-version/version)
+version=$(cat release-version/version)
 
 echo
 echo Updating tags in README and utility tasks to v${version}
