@@ -1,18 +1,18 @@
 package main_test
 
 import (
-	"testing"
 	"github.com/onsi/gomega"
 	"github.com/onsi/gomega/gbytes"
 	"github.com/onsi/gomega/gexec"
 	"github.com/sclevine/spec"
 	"github.com/sclevine/spec/report"
+	"testing"
 
+	"fmt"
 	"os"
 	"os/exec"
-	"strings"
-	"fmt"
 	"path/filepath"
+	"strings"
 )
 
 // TestShowCommandsWhichPrettyPrintJson tests the three commands which pretty-print JSON files output by the resource.
@@ -29,6 +29,7 @@ func TestShowCommandsWhichPrettyPrintJson(t *testing.T) {
 		"show-build":     "github.com/jchesterpivotal/concourse-build-resource/cmd/show-build",
 		"show-plan":      "github.com/jchesterpivotal/concourse-build-resource/cmd/show-plan",
 		"show-resources": "github.com/jchesterpivotal/concourse-build-resource/cmd/show-resources",
+		"show-job":       "github.com/jchesterpivotal/concourse-build-resource/cmd/show-job",
 	}
 
 	for cmdName, cmdPath := range commandsToTest {
@@ -130,6 +131,7 @@ func TestFileSystemTraversalsArePrevented(t *testing.T) {
 		"show-build":      "github.com/jchesterpivotal/concourse-build-resource/cmd/show-build",
 		"show-plan":       "github.com/jchesterpivotal/concourse-build-resource/cmd/show-plan",
 		"show-resources":  "github.com/jchesterpivotal/concourse-build-resource/cmd/show-resources",
+		"show-job":        "github.com/jchesterpivotal/concourse-build-resource/cmd/show-job",
 		"show-logs":       "github.com/jchesterpivotal/concourse-build-resource/cmd/show-logs",
 	}
 

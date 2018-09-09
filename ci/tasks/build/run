@@ -19,6 +19,7 @@ pushd concourse-build-resource-repo
     go build -mod=vendor -o ../binaries/show-build       cmd/show-build/main.go
     go build -mod=vendor -o ../binaries/show-plan        cmd/show-plan/main.go
     go build -mod=vendor -o ../binaries/show-resources   cmd/show-resources/main.go
+    go build -mod=vendor -o ../binaries/show-job         cmd/show-job/main.go
     go build -mod=vendor -o ../binaries/show-logs        cmd/show-logs/main.go
 
     go build -mod=vendor -o ../binaries/check            cmd/check/main.go
