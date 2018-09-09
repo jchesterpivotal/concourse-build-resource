@@ -6,6 +6,15 @@ This resource aims to make that as easy as possible.
 
 Authentication is _not_ supported currently. You will need to make all the jobs and pipelines you are following public, or it (essentially) won't work.
 
+### About this document
+
+If you are reading the document on master, you will often see features described that are not in a release version.
+Typically this means that they won't work in your pipeline if you are using `latest`, as I control release tags
+fairly tightly.
+
+[The latest release is `v0.8.0`](https://github.com/jchesterpivotal/concourse-build-resource/releases/tag/v0.8.0). See [the release README](https://github.com/jchesterpivotal/concourse-build-resource/tree/v0.8.0/README.md)
+for features you can expect to see in production.
+
 ## source
 
 * `concourse_url`: the base URL for your Concourse (Required)

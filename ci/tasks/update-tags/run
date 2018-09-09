@@ -13,9 +13,12 @@ echo
 git clone concourse-build-resource-repo updated-tags-repo
 
 pushd updated-tags-repo
-    grep -rl 'tag: v[[:digit:]]\+\.[[:digit:]]\+\.[[:digit:]]\+' . --exclude-dir=.git | xargs sed -i "s/tag: v[[:digit:]]\+\.[[:digit:]]\+\.[[:digit:]]\+/tag: v$version/g"
+    sed -i "s/v[[:digit:]]\+\.[[:digit:]]\+\.[[:digit:]]\+/v$version/g" README.md
+    git add README.md
 
-    grep -rl 'tag: v[[:digit:]]\+\.[[:digit:]]\+\.[[:digit:]]\+' . --exclude-dir=.git | xargs git add
+    grep -rl 'v[[:digit:]]\+\.[[:digit:]]\+\.[[:digit:]]\+' tasks/ | xargs sed -i "s/v[[:digit:]]\+\.[[:digit:]]\+\.[[:digit:]]\+/v$version/g"
+    grep -rl 'v[[:digit:]]\+\.[[:digit:]]\+\.[[:digit:]]\+' tasks/ | xargs git add
+
     git status --verbose
     git commit -m "Update README.md and utility tasks to v$version" \
                -m "This commit is made automatically by the 'shipit' job." \
