@@ -65,6 +65,12 @@ func TestInCmd(t *testing.T) {
 						w.Header().Set("Content-Type", "application/json")
 						io.WriteString(w, "id: 0\nevent: end\ndata")
 					}))
+					server.RouteToHandler("GET", "/api/v1/teams/t/pipelines/p/jobs/j", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+						w.Header().Set("Content-Type", "application/json")
+						json.NewEncoder(w).Encode(atc.Job{})
+						json.NewEncoder(w).Encode(atc.JobConfigs{})
+						json.NewEncoder(w).Encode(atc.JobConfig{})
+					}))
 
 					cmd := exec.Command(compiledPath, "build")
 					input := fmt.Sprintf(`{"version":{"build_id":"111"},"source":{"concourse_url":"%s","team":"t","pipeline":"p","job":"j"}}`, server.URL())
@@ -106,6 +112,10 @@ func TestInCmd(t *testing.T) {
 					server.RouteToHandler("GET", "/api/v1/builds/111/plan", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 						w.Header().Set("Content-Type", "application/json")
 						json.NewEncoder(w).Encode(atc.PublicBuildPlan{})
+					}))
+					server.RouteToHandler("GET", "/api/v1/teams/t/pipelines/p/jobs/j", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+						w.Header().Set("Content-Type", "application/json")
+						json.NewEncoder(w).Encode(atc.Job{})
 					}))
 					server.RouteToHandler("GET", "/api/v1/builds/111/events", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 						w.Header().Set("Content-Type", "application/json")

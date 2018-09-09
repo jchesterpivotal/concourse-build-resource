@@ -78,6 +78,20 @@ func (i inner) In() (*config.InResponse, error) {
 	i.writeJsonFile(i.addDetailedPostfixTo("plan", build), "json", plan)
 	i.writeJsonFile(i.addBuildNumberPostfixTo("plan"), "json", plan)
 
+	// job
+	job, found, err := i.concourseTeam.Job(i.inRequest.Source.Pipeline, i.inRequest.Source.Job)
+	if err != nil {
+		return nil, fmt.Errorf("error while fetching job information for pipeline/job/build '%s/%s/%s': %s", i.inRequest.Source.Pipeline, i.inRequest.Source.Job, i.inRequest.Version.BuildId, err.Error())
+	}
+	if !found {
+		return nil, fmt.Errorf("pipeline/job/build '%s/%s/%s' not found while fetching pipeline/job/build information", i.inRequest.Source.Pipeline, i.inRequest.Source.Job, i.inRequest.Version.BuildId)
+	}
+
+	i.writeJsonFile("job", "json", job)
+	i.writeJsonFile(i.addDetailedPostfixTo("job", build), "json", job)
+	i.writeJsonFile(i.addBuildNumberPostfixTo("job"), "json", job)
+
+
 	// events
 	err = i.renderEventsRepetitively(build)
 	if err != nil {
