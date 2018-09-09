@@ -127,11 +127,14 @@ jobs: ##########################################################################
   serial_groups: [build-and-release]
   plan:
   - aggregate:
-    - get: concourse-build-resource-repo
-      passed: [build-image-release]
     - get: release-version
       passed: [build-image-release]
       trigger: true
+    - get: concourse-build-resource-repo
+      passed: [build-image-release]
+    - get: release-image
+      passed: [build-image-release]
+
 
   - task: update-tags-in-files
     file: concourse-build-resource-repo/ci/tasks/update-tags/task.yml
