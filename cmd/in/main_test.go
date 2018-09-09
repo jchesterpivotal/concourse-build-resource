@@ -1,23 +1,23 @@
 package main_test
 
 import (
-	"testing"
 	"github.com/onsi/gomega"
-	"github.com/onsi/gomega/gexec"
 	"github.com/onsi/gomega/gbytes"
+	"github.com/onsi/gomega/gexec"
 	"github.com/onsi/gomega/ghttp"
 	"github.com/sclevine/spec"
 	"github.com/sclevine/spec/report"
+	"testing"
 
 	"github.com/concourse/atc"
 
-	"os"
-	"os/exec"
 	"bytes"
-	"net/http"
 	"encoding/json"
 	"fmt"
 	"io"
+	"net/http"
+	"os"
+	"os/exec"
 )
 
 func TestInCmd(t *testing.T) {
@@ -45,12 +45,12 @@ func TestInCmd(t *testing.T) {
 					server.RouteToHandler("GET", "/api/v1/builds/111", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 						w.Header().Set("Content-Type", "application/json")
 						json.NewEncoder(w).Encode(atc.Build{
-							ID: 999,
-							Status: string(atc.StatusSucceeded),
-							TeamName: "t",
+							ID:           999,
+							Status:       string(atc.StatusSucceeded),
+							TeamName:     "t",
 							PipelineName: "p",
-							JobName: "j",
-							Name: "111",
+							JobName:      "j",
+							Name:         "111",
 						})
 					}))
 					server.RouteToHandler("GET", "/api/v1/builds/111/resources", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -103,7 +103,13 @@ func TestInCmd(t *testing.T) {
 					server = ghttp.NewServer()
 					server.RouteToHandler("GET", "/api/v1/builds/111", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 						w.Header().Set("Content-Type", "application/json")
-						json.NewEncoder(w).Encode(atc.Build{ID: 999, Status: string(atc.StatusSucceeded)})
+						json.NewEncoder(w).Encode(atc.Build{
+							ID:           999,
+							Status:       string(atc.StatusSucceeded),
+							TeamName:     "t",
+							PipelineName: "p",
+							JobName:      "j",
+						})
 					}))
 					server.RouteToHandler("GET", "/api/v1/builds/111/resources", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 						w.Header().Set("Content-Type", "application/json")

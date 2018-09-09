@@ -217,6 +217,106 @@ func TestInPkg(t *testing.T) {
 					gt.Expect(AFileExistsContaining("build/build_url", "https://example.com/teams/team/pipelines/pipeline/jobs/job/builds/111", gt)).To(gomega.BeTrue())
 				})
 			}, spec.Nested())
+
+			when("the pipeline name or job name are unspecified", func() {
+				it.Before(func() {
+					os.Remove("build/job.json")
+					os.Remove("build/job_999.json")
+					os.Remove("build/job_team_pipeline-from-build_job-from-build_111.json")
+
+					fakeclient.BuildReturns(atc.Build{
+						ID:           999,
+						Name:         "111",
+						TeamName:     "team",
+						PipelineName: "pipeline-from-build",
+						JobName:      "job-from-build",
+						StartTime:    1010101010,
+						EndTime:      1191919191,
+						Status:       "succeeded",
+						APIURL:       "/api/v1/builds/999",
+					}, true, nil)
+					fakeclient.BuildResourcesReturns(atc.BuildInputsOutputs{
+						Inputs:  []atc.PublicBuildInput{},
+						Outputs: []atc.VersionedResource{},
+					}, true, nil)
+					fakeclient.BuildPlanReturns(atc.PublicBuildPlan{}, true, nil)
+					faketeam.JobReturns(atc.Job{
+						ID:            444,
+						Name:          "job",
+						PipelineName:  "pipeline",
+						TeamName:      "team",
+						FinishedBuild: &atc.Build{},
+					}, true, nil)
+					fakeeventstream.NextEventReturns(nil, io.EOF)
+					fakeclient.BuildEventsReturns(fakeeventstream, nil)
+
+					inner := in.NewInnerUsingClient(&config.InRequest{
+						Source: config.Source{
+							ConcourseUrl: "https://example.com",
+							Team:         "team",
+						},
+						Version:          config.Version{BuildId: "999"},
+						Params:           config.InParams{},
+						WorkingDirectory: "build",
+						ReleaseVersion:   "v0.99.11",
+						ReleaseGitRef:    "abcdef1234567890",
+						GetTimestamp:     1234567890,
+					}, fakeclient)
+					response, err = inner.In()
+					gt.Expect(err).NotTo(gomega.HaveOccurred())
+				})
+
+				it("uses information from the build to fetch the job", func() {
+					pipeline, job := faketeam.JobArgsForCall(0)
+					gt.Expect(pipeline).To(gomega.Equal("pipeline-from-build"))
+					gt.Expect(job).To(gomega.Equal("job-from-build"))
+				})
+
+				it("writes out the job.json file", func() {
+					gt.Expect(AFileExistsContaining("build/job.json", `"finished_build":`, gt)).To(gomega.BeTrue())
+				})
+
+				it("writes out the job_<build number>.json file", func() {
+					gt.Expect(AFileExistsContaining("build/job_999.json", `"finished_build":`, gt)).To(gomega.BeTrue())
+				})
+
+				it("writes out the job_<team>_<pipeline>_<job>_<build number>.json file", func() {
+					gt.Expect(AFileExistsContaining("build/job_team_pipeline-from-build_job-from-build_111.json", `"finished_build":`, gt)).To(gomega.BeTrue())
+				})
+
+				it("adds resource version metadata to JSON files", func() {
+					gt.Expect(AFileExistsContaining("build/job.json", `"concourse_build_resource":{"release":"v0.99.11","git_ref":"abcdef1234567890","get_timestamp":1234567890},`, gt)).To(gomega.BeTrue())
+				})
+			}, spec.Nested())
+
+			when("only the concourse URL was specified", func() {
+				it.Before(func() {
+					fakeclient.BuildReturns(atc.Build{
+						TeamName: "team-from-build",
+					}, true, nil)
+					fakeclient.BuildResourcesReturns(atc.BuildInputsOutputs{}, true, nil)
+					fakeclient.BuildPlanReturns(atc.PublicBuildPlan{}, true, nil)
+					faketeam.JobReturns(atc.Job{}, true, nil)
+					fakeeventstream.NextEventReturns(nil, io.EOF)
+					fakeclient.BuildEventsReturns(fakeeventstream, nil)
+
+					inner := in.NewInnerUsingClient(&config.InRequest{
+						Source: config.Source{
+							ConcourseUrl: "https://example.com",
+						},
+						Version:          config.Version{BuildId: "999"},
+						Params:           config.InParams{},
+						WorkingDirectory: "build",
+					}, fakeclient)
+					response, err = inner.In()
+					gt.Expect(err).NotTo(gomega.HaveOccurred())
+				})
+
+				it("uses the build's team name to fetch the job", func() {
+					team := fakeclient.TeamArgsForCall(1)
+					gt.Expect(team).To(gomega.Equal("team-from-build"))
+				})
+			}, spec.Nested())
 		}, spec.Nested())
 
 		when("something goes wrong", func() {

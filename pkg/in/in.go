@@ -79,18 +79,23 @@ func (i inner) In() (*config.InResponse, error) {
 	i.writeJsonFile(i.addBuildNumberPostfixTo("plan"), "json", plan)
 
 	// job
-	job, found, err := i.concourseTeam.Job(i.inRequest.Source.Pipeline, i.inRequest.Source.Job)
+	// if the concourse team was blank in source, we need to replace here based on the build response.
+	if i.inRequest.Source.Team == "" {
+		i.concourseTeam = i.concourseClient.Team(build.TeamName)
+	}
+
+	// use build information as team, pipeline and job names might not have been provided in source
+	job, found, err := i.concourseTeam.Job(build.PipelineName, build.JobName)
 	if err != nil {
-		return nil, fmt.Errorf("error while fetching job information for pipeline/job/build '%s/%s/%s': %s", i.inRequest.Source.Pipeline, i.inRequest.Source.Job, i.inRequest.Version.BuildId, err.Error())
+		return nil, fmt.Errorf("error while fetching job information for pipeline/job '%s/%s': %s", build.PipelineName, build.JobName, err.Error())
 	}
 	if !found {
-		return nil, fmt.Errorf("pipeline/job/build '%s/%s/%s' not found while fetching pipeline/job/build information", i.inRequest.Source.Pipeline, i.inRequest.Source.Job, i.inRequest.Version.BuildId)
+		return nil, fmt.Errorf("pipeline/job '%s/%s' not found while fetching pipeline/job information", build.PipelineName, build.JobName)
 	}
 
 	i.writeJsonFile("job", "json", job)
 	i.writeJsonFile(i.addDetailedPostfixTo("job", build), "json", job)
 	i.writeJsonFile(i.addBuildNumberPostfixTo("job"), "json", job)
-
 
 	// events
 	err = i.renderEventsRepetitively(build)
@@ -146,7 +151,7 @@ func NewInnerUsingClient(input *config.InRequest, client gc.Client) Inner {
 }
 
 func (i inner) concourseUrl(build atc.Build) string {
-	return i.inRequest.Source.ConcourseUrl
+	return i.inRequest.Source.ConcourseUrl // TODO: strip trailing slash
 }
 
 func (i inner) teamUrl(build atc.Build) string {
