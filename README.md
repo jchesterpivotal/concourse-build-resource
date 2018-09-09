@@ -37,6 +37,7 @@ Will produce a number of files in the resource directory.
 * `build.json`: the build metadata
 * `resources.json`: the resource versions that were involved in `get`s or `put`s
 * `plan.json`: the plan of the Job
+* `job.json`: the Job structure
 * `events.log`: the logs from the Job.
 
 ### The original resources with information encoded in the filename
@@ -114,9 +115,9 @@ on the results of the build being watched.
 This is useful if you coordinate with downstream teams who consume your work: you can add a job to your pipeline
 which fails when the downstream job fails.
 
-## `show-build`, `show-plan`, `show-resources`
+## `show-build`, `show-plan`, `show-resources`, `show-job`
 
-These tasks produce pretty-printed output of the build, plan and resource JSON files.
+These tasks produce pretty-printed output of the build, plan, resource and job JSON files.
 
 ## `show-logs`
 
@@ -175,6 +176,8 @@ jobs:
       file: concourse-build-resource/tasks/show-plan/task.yml
     - task: show-resources
       file: concourse-build-resource/tasks/show-resources/task.yml
+    - task: show-resources
+      file: concourse-build-resource/tasks/show-job/task.yml
     - task: show-logs
       file: concourse-build-resource/tasks/show-logs/task.yml
 ```
