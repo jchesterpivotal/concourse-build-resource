@@ -3,6 +3,7 @@ package check
 import (
 	"github.com/jchesterpivotal/concourse-build-resource/pkg/config"
 	"log"
+	"strings"
 
 	"github.com/concourse/atc"
 	gc "github.com/concourse/go-concourse/concourse"
@@ -96,6 +97,8 @@ func NewChecker(input *config.CheckRequest) Checker {
 }
 
 func NewCheckerUsingClient(input *config.CheckRequest, client gc.Client) Checker {
+	input.Source.ConcourseUrl = strings.TrimSuffix(input.Source.ConcourseUrl, "/")
+
 	return checker{
 		checkRequest:    input,
 		concourseClient: client,

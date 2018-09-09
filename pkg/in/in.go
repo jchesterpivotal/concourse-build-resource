@@ -143,6 +143,8 @@ func NewInner(input *config.InRequest) Inner {
 }
 
 func NewInnerUsingClient(input *config.InRequest, client gc.Client) Inner {
+	input.Source.ConcourseUrl = strings.TrimSuffix(input.Source.ConcourseUrl, "/")
+
 	return inner{
 		inRequest:       input,
 		concourseClient: client,
@@ -151,7 +153,7 @@ func NewInnerUsingClient(input *config.InRequest, client gc.Client) Inner {
 }
 
 func (i inner) concourseUrl(build atc.Build) string {
-	return i.inRequest.Source.ConcourseUrl // TODO: strip trailing slash
+	return i.inRequest.Source.ConcourseUrl
 }
 
 func (i inner) teamUrl(build atc.Build) string {

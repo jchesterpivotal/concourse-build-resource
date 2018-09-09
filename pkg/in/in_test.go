@@ -317,6 +317,37 @@ func TestInPkg(t *testing.T) {
 					gt.Expect(team).To(gomega.Equal("team-from-build"))
 				})
 			}, spec.Nested())
+
+			when("the concourse URL has a trailing slash", func() {
+				it.Before(func() {
+					fakeclient.BuildReturns(atc.Build{
+						TeamName:     "team",
+						PipelineName: "pipeline",
+						JobName:      "job",
+						Name:         "123",
+					}, true, nil)
+					fakeclient.BuildResourcesReturns(atc.BuildInputsOutputs{}, true, nil)
+					fakeclient.BuildPlanReturns(atc.PublicBuildPlan{}, true, nil)
+					faketeam.JobReturns(atc.Job{}, true, nil)
+					fakeeventstream.NextEventReturns(nil, io.EOF)
+					fakeclient.BuildEventsReturns(fakeeventstream, nil)
+
+					inner := in.NewInnerUsingClient(&config.InRequest{
+						Source: config.Source{
+							ConcourseUrl: "https://example.com/",
+						},
+						Version:          config.Version{BuildId: "999"},
+						Params:           config.InParams{},
+						WorkingDirectory: "build",
+					}, fakeclient)
+					response, err = inner.In()
+					gt.Expect(err).NotTo(gomega.HaveOccurred())
+				})
+
+				it("strips the trailing slash", func() {
+					gt.Expect(response.Metadata[0].Value).ToNot(gomega.ContainSubstring("https://example.com//teams"))
+				})
+			}, spec.Nested())
 		}, spec.Nested())
 
 		when("something goes wrong", func() {

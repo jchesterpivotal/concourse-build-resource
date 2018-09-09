@@ -525,7 +525,6 @@ func TestCheckPkg(t *testing.T) {
 						gt.Expect(response).To(gomega.Equal(&config.CheckResponse{}))
 					})
 				}, spec.Nested())
-
 			}, spec.Nested())
 
 			when("checking all jobs in all teams", func() {
@@ -681,7 +680,25 @@ func TestCheckPkg(t *testing.T) {
 						gt.Expect(response).To(gomega.Equal(&config.CheckResponse{}))
 					})
 				}, spec.Nested())
+			}, spec.Nested())
 
+			when("the concourse URL has a trailing slash", func() {
+				gt := gomega.NewGomegaWithT(t)
+
+				it.Before(func() {
+					fakeclient.BuildsReturns([]atc.Build{}, concourse.Pagination{}, fmt.Errorf("test error"))
+
+					checker := check.NewCheckerUsingClient(&config.CheckRequest{
+						Version: config.Version{BuildId: "999"},
+						Source: config.Source{ConcourseUrl: "https://example.com/"},
+					}, fakeclient)
+					response, err = checker.Check()
+				})
+
+				it("strips the trailing slash", func() {
+					// fairly roundabout, but this is the only place where the value comes back from check
+					gt.Expect(err.Error()).ToNot(gomega.ContainSubstring("https://example.com/"))
+				})
 			}, spec.Nested())
 		}, spec.Nested())
 
