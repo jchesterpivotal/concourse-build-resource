@@ -12,6 +12,10 @@ resources: #####################################################################
       value: Jacques Chester
     - name: user.email
       value: jchester+githubrobot@pivotal.io
+    ignore_paths:
+    - README.md
+    - tasks/*
+    - ci/pipelines/*
 
 - name: release-image
   type: docker-image
@@ -35,6 +39,7 @@ resources: #####################################################################
     owner: jchesterpivotal
     repository: concourse-build-resource
     access_token: ((github-access-token))
+    drafts: true
 
 jobs: #############################################################################################
 
@@ -47,7 +52,7 @@ jobs: ##########################################################################
   - task: run-test
     file: concourse-build-resource-repo/ci/tasks/test/task.yml
 
-- name: build-image
+- name: build-image-rc
   public: true
   serial_groups: [build-and-release]
   plan:
@@ -69,19 +74,64 @@ jobs: ##########################################################################
       tag_as_latest: false
       tag_prefix: v
 
+- name: begin-patch-release
+  public: true
+  plan:
+  - put: release-version
+    params: { bump: patch }
+
+- name: begin-minor-release
+  public: true
+  plan:
+  - put: release-version
+    params: { bump: minor }
+
+- name: throttle-releases
+  public: true
+  serial_groups: [build-and-release]
+  plan:
+  - aggregate:
+    - get: triggered-by-minor-bump
+      resource: release-version
+      trigger: true
+      passed: [begin-minor-release]
+    - get: triggered-by-patch-bump
+      resource: release-version
+      trigger: true
+      passed: [begin-patch-release]
+
+- name: build-image-release
+  public: true
+  serial_groups: [build-and-release]
+  plan:
+  - aggregate:
+    - get: concourse-build-resource-repo
+      passed: [build-image-rc]
+    - get: release-version
+      trigger: true
+      version: every
+      passed: [throttle-releases]
+  - task: build-binaries
+    file: concourse-build-resource-repo/ci/tasks/build/task.yml
+    input_mapping: { version: release-version }
+  - put: release-image
+    params:
+      dockerfile: concourse-build-resource-repo/ci/Dockerfile
+      build: .
+      tag_file: release-version/version
+      tag_as_latest: false
+      tag_prefix: v
+
 - name: shipit
   public: true
   serial_groups: [build-and-release]
   plan:
   - aggregate:
     - get: concourse-build-resource-repo
-      passed: [build-image]
-    - get: release-image
-      passed: [build-image]
-      params: {save: true}
+      passed: [build-image-release]
     - get: release-version
-      passed: [build-image]
-      params: { bump: final }
+      passed: [build-image-release]
+      trigger: true
 
   - task: update-tags-in-files
     file: concourse-build-resource-repo/ci/tasks/update-tags/task.yml
@@ -93,22 +143,12 @@ jobs: ##########################################################################
   - put: concourse-build-resource-repo
     params:
       repository: updated-tags-repo
-
-  - aggregate:
-    - put: release-image
-      params:
-        load: release-image
-        tag_file: release-version/version
-        tag_as_latest: true
-        tag_prefix: v
-    - put: release-version
-      params: { file: release-version/version }
-    - put: github-release
-      params:
-        name: release-version/version
-        tag: release-version/version
-        commitish: concourse-build-resource-repo/.git/ref
-        tag_prefix: v
+  - put: github-release
+    params:
+      name: release-version/version
+      tag: release-version/version
+      commitish: concourse-build-resource-repo/.git/ref
+      tag_prefix: v
 
 - name: bump-patch-version
   public: true
