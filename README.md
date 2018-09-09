@@ -83,12 +83,14 @@ The resource injects metadata about itself into each JSON file under the `concou
 * `get_timestamp`: A timestamp for when the actual `get` step (ie, the execution of `in`) took place. The timestamp
   is generated during the launch of `in` -- it reflects the start time of fetching data, not the end time. It also
   makes no attempt to be clever about timezones, so keep an eye out for those unwanted epoch dates.
+* `concourse_version`: The version of Concourse the resource interacted with at the time of the `get`.
 
 For consistency, these individual files contain the same information as the metadata injected into JSON:
 
 * `concourse_build_resource_release`: Same information as `release` in the JSON files.
 * `concourse_build_resource_git_ref`: Same information as `git_ref` in the JSON files.
 * `concourse_build_resource_get_timestamp`: Same information as the `get_timestamp` in the JSON files.
+* `concourse_version`: Same information as the `concourse_version` in the JSON files.
 
 ### Warning
 

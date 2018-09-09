@@ -27,11 +27,18 @@ type inner struct {
 	inRequest       *config.InRequest
 	concourseClient gc.Client
 	concourseTeam   gc.Team
+	concourseInfo   atc.Info
 }
 
 func (i inner) In() (*config.InResponse, error) {
 	if i.inRequest.Source.EnableTracing {
 		log.Printf("Received InRequest: %+v", i.inRequest)
+	}
+
+	var err error
+	i.concourseInfo, err = i.concourseClient.GetInfo()
+	if err != nil {
+		return nil, fmt.Errorf("could not get Concourse server information: %s", err.Error())
 	}
 
 	buildId, err := strconv.Atoi(i.inRequest.Version.BuildId)
@@ -121,6 +128,7 @@ func (i inner) In() (*config.InResponse, error) {
 	i.writeStringFile("concourse_build_resource_release", i.inRequest.ReleaseVersion)
 	i.writeStringFile("concourse_build_resource_git_ref", i.inRequest.ReleaseGitRef)
 	i.writeStringFile("concourse_build_resource_get_timestamp", strconv.Itoa(int(i.inRequest.GetTimestamp)))
+	i.writeStringFile("concourse_version", i.concourseInfo.Version)
 
 	return &config.InResponse{
 		Version: i.inRequest.Version,
@@ -210,7 +218,13 @@ func (i inner) writeJsonFile(filename string, extension string, object interface
 		return fmt.Errorf("could not encode response from server into '%s': %s", filename, err.Error())
 	}
 
-	getMetadataStr := fmt.Sprintf(`{"concourse_build_resource":{"release":"%s","git_ref":"%s","get_timestamp":%d},`, i.inRequest.ReleaseVersion, i.inRequest.ReleaseGitRef, i.inRequest.GetTimestamp)
+	getMetadataStr := fmt.Sprintf(
+		`{"concourse_build_resource":{"release":"%s","git_ref":"%s","get_timestamp":%d,"concourse_version":"%s"},`,
+		i.inRequest.ReleaseVersion,
+		i.inRequest.ReleaseGitRef,
+		i.inRequest.GetTimestamp,
+		i.concourseInfo.Version,
+	)
 	jsonStr := builder.String()
 	jsonStr = strings.Replace(jsonStr, "{", getMetadataStr, 1)
 

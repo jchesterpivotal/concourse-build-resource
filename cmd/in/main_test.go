@@ -42,6 +42,10 @@ func TestInCmd(t *testing.T) {
 
 				it.Before(func() {
 					server = ghttp.NewServer()
+					server.RouteToHandler("GET", "/api/v1/info", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+						w.Header().Set("Content-Type", "application/json")
+						json.NewEncoder(w).Encode(atc.Info{})
+					}))
 					server.RouteToHandler("GET", "/api/v1/builds/111", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 						w.Header().Set("Content-Type", "application/json")
 						json.NewEncoder(w).Encode(atc.Build{
@@ -101,6 +105,10 @@ func TestInCmd(t *testing.T) {
 
 				it.Before(func() {
 					server = ghttp.NewServer()
+					server.RouteToHandler("GET", "/api/v1/info", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+						w.Header().Set("Content-Type", "application/json")
+						json.NewEncoder(w).Encode(atc.Info{})
+					}))
 					server.RouteToHandler("GET", "/api/v1/builds/111", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 						w.Header().Set("Content-Type", "application/json")
 						json.NewEncoder(w).Encode(atc.Build{

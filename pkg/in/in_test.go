@@ -37,6 +37,13 @@ func TestInPkg(t *testing.T) {
 			var response *config.InResponse
 			var err error
 
+			it.Before(func() {
+				fakeclient.GetInfoReturns(atc.Info{
+					Version:       "3.99.11",
+					WorkerVersion: "",
+				}, nil)
+			})
+
 			when("the concourse, team, pipeline and job are specified", func() {
 				it.Before(func() {
 					fakeclient.BuildReturns(atc.Build{
@@ -134,10 +141,10 @@ func TestInPkg(t *testing.T) {
 				})
 
 				it("adds resource version metadata to JSON files", func() {
-					gt.Expect(AFileExistsContaining("build/build.json", `"concourse_build_resource":{"release":"v0.99.11","git_ref":"abcdef1234567890","get_timestamp":1234567890},`, gt)).To(gomega.BeTrue())
-					gt.Expect(AFileExistsContaining("build/plan.json", `"concourse_build_resource":{"release":"v0.99.11","git_ref":"abcdef1234567890","get_timestamp":1234567890},`, gt)).To(gomega.BeTrue())
-					gt.Expect(AFileExistsContaining("build/resources.json", `"concourse_build_resource":{"release":"v0.99.11","git_ref":"abcdef1234567890","get_timestamp":1234567890},`, gt)).To(gomega.BeTrue())
-					gt.Expect(AFileExistsContaining("build/job.json", `"concourse_build_resource":{"release":"v0.99.11","git_ref":"abcdef1234567890","get_timestamp":1234567890},`, gt)).To(gomega.BeTrue())
+					gt.Expect(AFileExistsContaining("build/build.json", `"concourse_build_resource":{"release":"v0.99.11","git_ref":"abcdef1234567890","get_timestamp":1234567890,"concourse_version":"3.99.11"},`, gt)).To(gomega.BeTrue())
+					gt.Expect(AFileExistsContaining("build/plan.json", `"concourse_build_resource":{"release":"v0.99.11","git_ref":"abcdef1234567890","get_timestamp":1234567890,"concourse_version":"3.99.11"},`, gt)).To(gomega.BeTrue())
+					gt.Expect(AFileExistsContaining("build/resources.json", `"concourse_build_resource":{"release":"v0.99.11","git_ref":"abcdef1234567890","get_timestamp":1234567890,"concourse_version":"3.99.11"},`, gt)).To(gomega.BeTrue())
+					gt.Expect(AFileExistsContaining("build/job.json", `"concourse_build_resource":{"release":"v0.99.11","git_ref":"abcdef1234567890","get_timestamp":1234567890,"concourse_version":"3.99.11"},`, gt)).To(gomega.BeTrue())
 				})
 
 				it("writes out a concourse_build_resource_release file", func() {
@@ -150,6 +157,10 @@ func TestInPkg(t *testing.T) {
 
 				it("writes out a concourse_build_resource_get_timestamp file", func() {
 					gt.Expect(AFileExistsContaining("build/concourse_build_resource_get_timestamp", "1234567890", gt)).To(gomega.BeTrue())
+				})
+
+				it("writes out a concourse_version file", func() {
+					gt.Expect(AFileExistsContaining("build/concourse_version", "3.99.11", gt)).To(gomega.BeTrue())
 				})
 
 				// TODO: Tests for logs are less rigorous because mocking up the event streams is a PITA.
@@ -285,7 +296,7 @@ func TestInPkg(t *testing.T) {
 				})
 
 				it("adds resource version metadata to JSON files", func() {
-					gt.Expect(AFileExistsContaining("build/job.json", `"concourse_build_resource":{"release":"v0.99.11","git_ref":"abcdef1234567890","get_timestamp":1234567890},`, gt)).To(gomega.BeTrue())
+					gt.Expect(AFileExistsContaining("build/job.json", `"concourse_build_resource":{"release":"v0.99.11","git_ref":"abcdef1234567890","get_timestamp":1234567890,"concourse_version":"3.99.11"},`, gt)).To(gomega.BeTrue())
 				})
 			}, spec.Nested())
 
@@ -395,6 +406,24 @@ func TestInPkg(t *testing.T) {
 					gt.Expect(response).To(gomega.BeNil())
 				})
 			}, spec.Nested())
+
+			when("the Concourse version cannot be retrieved", func() {
+				it.Before(func() {
+					fakeclient.GetInfoReturns(atc.Info{}, fmt.Errorf("test error"))
+					inner := in.NewInnerUsingClient(&config.InRequest{
+						Source:           config.Source{Pipeline: "pipeline", Job: "job"},
+						Version:          config.Version{BuildId: "111"},
+						Params:           config.InParams{},
+						WorkingDirectory: "build",
+					}, fakeclient)
+					response, err = inner.In()
+				})
+
+				it("returns an error", func() {
+					gt.Expect(err.Error()).To(gomega.ContainSubstring("could not get Concourse server information: test error"))
+					gt.Expect(response).To(gomega.BeNil())
+				})
+			})
 		}, spec.Nested())
 
 		when("build ID is defined, but is not a valid number", func() {
