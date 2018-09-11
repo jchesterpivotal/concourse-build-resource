@@ -96,6 +96,10 @@ func TestInPkg(t *testing.T) {
 					gt.Expect(response.Metadata).To(gomega.ContainElement(config.VersionMetadataField{Name: "build_url", Value: "https://example.com/teams/team/pipelines/pipeline/jobs/job/builds/111"}))
 				})
 
+				it("returns metadata with the get UUID", func() {
+					gt.Expect(response.Metadata).To(gomega.ContainElement(config.VersionMetadataField{Name: "get_uuid", Value: "96d7128f-bacf-4f60-9ffd-1a9ca4c9e1d7"}))
+				})
+
 				it("writes out the build.json file", func() {
 					gt.Expect(AFileExistsContaining("build/build.json", `"api_url":"/api/v1/builds/999"`, gt)).To(gomega.BeTrue())
 				})

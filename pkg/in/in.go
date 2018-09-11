@@ -135,6 +135,7 @@ func (i inner) In() (*config.InResponse, error) {
 		Version: i.inRequest.Version,
 		Metadata: []config.VersionMetadataField{
 			{Name: "build_url", Value: i.buildUrl(build)},
+			{Name: "get_uuid", Value: i.inRequest.GetUuid},
 		},
 	}, nil
 }

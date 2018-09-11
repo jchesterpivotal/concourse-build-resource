@@ -93,7 +93,7 @@ func TestInCmd(t *testing.T) {
 				})
 
 				it("prints metadata to stdout", func() {
-					gt.Eventually(session.Out).Should(gbytes.Say(`"metadata":\[{"name":"build_url","value":"http://127.0.0.1:(\d+)/teams/t/pipelines/p/jobs/j/builds/111"}\]`))
+					gt.Eventually(session.Out).Should(gbytes.Say(`"metadata":\[{"name":"build_url","value":"http://127.0.0.1:(\d+)/teams/t/pipelines/p/jobs/j/builds/111"},{"name":"get_uuid","value":"([a-z0-9]{8})-([a-z0-9]{4})-([1-5][a-z0-9]{3})-([a-z0-9]{4})-([a-z0-9]{12})"}\]`))
 					gt.Eventually(session).Should(gexec.Exit(0))
 				})
 			}, spec.Nested())
