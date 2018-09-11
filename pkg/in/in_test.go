@@ -3,6 +3,7 @@ package in_test
 import (
 	fakes "github.com/concourse/go-concourse/concourse/concoursefakes"
 	"github.com/concourse/go-concourse/concourse/eventstream/eventstreamfakes"
+	"github.com/nu7hatch/gouuid"
 	"github.com/onsi/gomega"
 	"github.com/sclevine/spec"
 	"github.com/sclevine/spec/report"
@@ -66,6 +67,8 @@ func TestInPkg(t *testing.T) {
 					fakeeventstream.NextEventReturns(nil, io.EOF)
 					fakeclient.BuildEventsReturns(fakeeventstream, nil)
 
+					uuid, err := uuid.ParseHex("96d7128f-bacf-4f60-9ffd-1a9ca4c9e1d7")
+					gt.Expect(err).NotTo(gomega.HaveOccurred())
 					inner := in.NewInnerUsingClient(&config.InRequest{
 						Source: config.Source{
 							ConcourseUrl: "https://example.com",
@@ -79,6 +82,7 @@ func TestInPkg(t *testing.T) {
 						ReleaseVersion:   "v0.99.11",
 						ReleaseGitRef:    "abcdef1234567890",
 						GetTimestamp:     1234567890,
+						GetUuid:          uuid.String(),
 					}, fakeclient)
 					response, err = inner.In()
 					gt.Expect(err).NotTo(gomega.HaveOccurred())
@@ -141,10 +145,10 @@ func TestInPkg(t *testing.T) {
 				})
 
 				it("adds resource version metadata to JSON files", func() {
-					gt.Expect(AFileExistsContaining("build/build.json", `"concourse_build_resource":{"release":"v0.99.11","git_ref":"abcdef1234567890","get_timestamp":1234567890,"concourse_version":"3.99.11"},`, gt)).To(gomega.BeTrue())
-					gt.Expect(AFileExistsContaining("build/plan.json", `"concourse_build_resource":{"release":"v0.99.11","git_ref":"abcdef1234567890","get_timestamp":1234567890,"concourse_version":"3.99.11"},`, gt)).To(gomega.BeTrue())
-					gt.Expect(AFileExistsContaining("build/resources.json", `"concourse_build_resource":{"release":"v0.99.11","git_ref":"abcdef1234567890","get_timestamp":1234567890,"concourse_version":"3.99.11"},`, gt)).To(gomega.BeTrue())
-					gt.Expect(AFileExistsContaining("build/job.json", `"concourse_build_resource":{"release":"v0.99.11","git_ref":"abcdef1234567890","get_timestamp":1234567890,"concourse_version":"3.99.11"},`, gt)).To(gomega.BeTrue())
+					gt.Expect(AFileExistsContaining("build/build.json", `"concourse_build_resource":{"release":"v0.99.11","git_ref":"abcdef1234567890","get_timestamp":1234567890,"concourse_version":"3.99.11","get_uuid":"96d7128f-bacf-4f60-9ffd-1a9ca4c9e1d7"},`, gt)).To(gomega.BeTrue())
+					gt.Expect(AFileExistsContaining("build/plan.json", `"concourse_build_resource":{"release":"v0.99.11","git_ref":"abcdef1234567890","get_timestamp":1234567890,"concourse_version":"3.99.11","get_uuid":"96d7128f-bacf-4f60-9ffd-1a9ca4c9e1d7"},`, gt)).To(gomega.BeTrue())
+					gt.Expect(AFileExistsContaining("build/resources.json", `"concourse_build_resource":{"release":"v0.99.11","git_ref":"abcdef1234567890","get_timestamp":1234567890,"concourse_version":"3.99.11","get_uuid":"96d7128f-bacf-4f60-9ffd-1a9ca4c9e1d7"},`, gt)).To(gomega.BeTrue())
+					gt.Expect(AFileExistsContaining("build/job.json", `"concourse_build_resource":{"release":"v0.99.11","git_ref":"abcdef1234567890","get_timestamp":1234567890,"concourse_version":"3.99.11","get_uuid":"96d7128f-bacf-4f60-9ffd-1a9ca4c9e1d7"},`, gt)).To(gomega.BeTrue())
 				})
 
 				it("writes out a concourse_build_resource_release file", func() {
@@ -157,6 +161,10 @@ func TestInPkg(t *testing.T) {
 
 				it("writes out a concourse_build_resource_get_timestamp file", func() {
 					gt.Expect(AFileExistsContaining("build/concourse_build_resource_get_timestamp", "1234567890", gt)).To(gomega.BeTrue())
+				})
+
+				it("writes out a concourse_build_resource_get_uuid file", func() {
+					gt.Expect(AFileExistsContaining("build/concourse_build_resource_get_uuid", "96d7128f-bacf-4f60-9ffd-1a9ca4c9e1d7", gt)).To(gomega.BeTrue())
 				})
 
 				it("writes out a concourse_version file", func() {
@@ -261,6 +269,8 @@ func TestInPkg(t *testing.T) {
 					fakeeventstream.NextEventReturns(nil, io.EOF)
 					fakeclient.BuildEventsReturns(fakeeventstream, nil)
 
+					uuid, err := uuid.ParseHex("96d7128f-bacf-4f60-9ffd-1a9ca4c9e1d7")
+					gt.Expect(err).NotTo(gomega.HaveOccurred())
 					inner := in.NewInnerUsingClient(&config.InRequest{
 						Source: config.Source{
 							ConcourseUrl: "https://example.com",
@@ -272,6 +282,7 @@ func TestInPkg(t *testing.T) {
 						ReleaseVersion:   "v0.99.11",
 						ReleaseGitRef:    "abcdef1234567890",
 						GetTimestamp:     1234567890,
+						GetUuid:          uuid.String(),
 					}, fakeclient)
 					response, err = inner.In()
 					gt.Expect(err).NotTo(gomega.HaveOccurred())
@@ -296,7 +307,7 @@ func TestInPkg(t *testing.T) {
 				})
 
 				it("adds resource version metadata to JSON files", func() {
-					gt.Expect(AFileExistsContaining("build/job.json", `"concourse_build_resource":{"release":"v0.99.11","git_ref":"abcdef1234567890","get_timestamp":1234567890,"concourse_version":"3.99.11"},`, gt)).To(gomega.BeTrue())
+					gt.Expect(AFileExistsContaining("build/job.json", `"concourse_build_resource":{"release":"v0.99.11","git_ref":"abcdef1234567890","get_timestamp":1234567890,"concourse_version":"3.99.11","get_uuid":"96d7128f-bacf-4f60-9ffd-1a9ca4c9e1d7"},`, gt)).To(gomega.BeTrue())
 				})
 			}, spec.Nested())
 

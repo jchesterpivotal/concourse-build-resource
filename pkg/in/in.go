@@ -128,6 +128,7 @@ func (i inner) In() (*config.InResponse, error) {
 	i.writeStringFile("concourse_build_resource_release", i.inRequest.ReleaseVersion)
 	i.writeStringFile("concourse_build_resource_git_ref", i.inRequest.ReleaseGitRef)
 	i.writeStringFile("concourse_build_resource_get_timestamp", strconv.Itoa(int(i.inRequest.GetTimestamp)))
+	i.writeStringFile("concourse_build_resource_get_uuid", i.inRequest.GetUuid)
 	i.writeStringFile("concourse_version", i.concourseInfo.Version)
 
 	return &config.InResponse{
@@ -219,11 +220,12 @@ func (i inner) writeJsonFile(filename string, extension string, object interface
 	}
 
 	getMetadataStr := fmt.Sprintf(
-		`{"concourse_build_resource":{"release":"%s","git_ref":"%s","get_timestamp":%d,"concourse_version":"%s"},`,
+		`{"concourse_build_resource":{"release":"%s","git_ref":"%s","get_timestamp":%d,"concourse_version":"%s","get_uuid":"%s"},`,
 		i.inRequest.ReleaseVersion,
 		i.inRequest.ReleaseGitRef,
 		i.inRequest.GetTimestamp,
 		i.concourseInfo.Version,
+		i.inRequest.GetUuid,
 	)
 	jsonStr := builder.String()
 	jsonStr = strings.Replace(jsonStr, "{", getMetadataStr, 1)

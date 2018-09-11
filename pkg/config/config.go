@@ -29,6 +29,7 @@ type InRequest struct {
 	ReleaseVersion   string
 	ReleaseGitRef    string
 	GetTimestamp     int64
+	GetUuid          string
 }
 
 type InResponse struct {
