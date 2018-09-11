@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/jchesterpivotal/concourse-build-resource/pkg/config"
 	"github.com/jchesterpivotal/concourse-build-resource/pkg/in"
+	"github.com/nu7hatch/gouuid"
 	"time"
 
 	"encoding/json"
@@ -22,6 +23,11 @@ func main() {
 		log.Fatalf("failed to parse input JSON: %s", err)
 	}
 
+	uuid, err := uuid.NewV4()
+	if err != nil {
+		log.Fatalf("failed to generate UUID: %s", err)
+	}
+	request.GetUuid = uuid.String()
 	request.WorkingDirectory = os.Args[1]
 	request.ReleaseVersion = releaseVersion
 	request.ReleaseGitRef = releaseGitRef
