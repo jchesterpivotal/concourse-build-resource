@@ -30,6 +30,7 @@ type inner struct {
 	concourseInfo   atc.Info
 	build           atc.Build
 	resources       atc.BuildInputsOutputs
+	plan 			atc.PublicBuildPlan
 	buildId         int
 }
 
@@ -71,17 +72,16 @@ func (i inner) In() (*config.InResponse, error) {
 	}
 
 	// plan
-	plan, found, err := i.concourseClient.BuildPlan(i.buildId)
+	err = i.getPlan()
 	if err != nil {
-		return nil, fmt.Errorf("error while fetching plan for build '%s': '%s", i.inRequest.Version.BuildId, err.Error())
-	}
-	if !found {
-		return nil, fmt.Errorf("build '%s' not found while fetching plan", i.inRequest.Version.BuildId)
+		return nil, err
 	}
 
-	i.writeJsonFile("plan", "json", plan)
-	i.writeJsonFile(i.addDetailedPostfixTo("plan"), "json", plan)
-	i.writeJsonFile(i.addBuildNumberPostfixTo("plan"), "json", plan)
+	err = i.writePlan()
+	if err != nil {
+		return nil, err
+	}
+
 
 	// job
 	// if the concourse team was blank in source, we need to replace here based on the build response.
@@ -223,6 +223,30 @@ func (i *inner) writeResources() error {
 	i.writeJsonFile("resources", "json", i.resources)
 	i.writeJsonFile(i.addDetailedPostfixTo("resources"), "json", i.resources)
 	i.writeJsonFile(i.addBuildNumberPostfixTo("resources"), "json", i.resources)
+
+	return nil
+}
+
+func (i *inner) getPlan() error {
+	var err error
+	var found bool
+	i.plan, found, err = i.concourseClient.BuildPlan(i.buildId)
+	if err != nil {
+		return fmt.Errorf("error while fetching plan for build '%s': '%s", i.inRequest.Version.BuildId, err.Error())
+	}
+	if !found {
+		return fmt.Errorf("build '%s' not found while fetching plan", i.inRequest.Version.BuildId)
+	}
+
+	return nil
+}
+
+func (i *inner) writePlan() error {
+	// TODO maybe actually handle the errors
+
+	i.writeJsonFile("plan", "json", i.plan)
+	i.writeJsonFile(i.addDetailedPostfixTo("plan"), "json", i.plan)
+	i.writeJsonFile(i.addBuildNumberPostfixTo("plan"), "json", i.plan)
 
 	return nil
 }
