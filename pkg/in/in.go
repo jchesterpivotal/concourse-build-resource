@@ -60,17 +60,15 @@ func (i inner) In() (*config.InResponse, error) {
 	}
 
 	// resources
-	resources, found, err := i.concourseClient.BuildResources(i.buildId)
+	err = i.getResources()
 	if err != nil {
-		return nil, fmt.Errorf("error while fetching resources for build '%s': '%s", i.inRequest.Version.BuildId, err.Error())
-	}
-	if !found {
-		return nil, fmt.Errorf("build '%s' not found while fetching resources", i.inRequest.Version.BuildId)
+		return nil, err
 	}
 
-	i.writeJsonFile("resources", "json", resources)
-	i.writeJsonFile(i.addDetailedPostfixTo("resources"), "json", resources)
-	i.writeJsonFile(i.addBuildNumberPostfixTo("resources"), "json", resources)
+	err = i.writeResources()
+	if err != nil {
+		return nil, err
+	}
 
 	// plan
 	plan, found, err := i.concourseClient.BuildPlan(i.buildId)
@@ -196,11 +194,35 @@ func (i *inner) getBuild() error {
 }
 
 func (i *inner) writeBuild() error {
-	// TODO maybe actually handle the errors,
+	// TODO maybe actually handle the errors
 
 	i.writeJsonFile("build", "json", i.build)
 	i.writeJsonFile(i.addDetailedPostfixTo("build"), "json", i.build)
 	i.writeJsonFile(i.addBuildNumberPostfixTo("build"), "json", i.build)
+
+	return nil
+}
+
+func (i *inner) getResources() error {
+	var err error
+	var found bool
+	i.resources, found, err = i.concourseClient.BuildResources(i.buildId)
+	if err != nil {
+		return fmt.Errorf("error while fetching resources for build '%s': '%s", i.inRequest.Version.BuildId, err.Error())
+	}
+	if !found {
+		return fmt.Errorf("build '%s' not found while fetching resources", i.inRequest.Version.BuildId)
+	}
+
+	return nil
+}
+
+func (i *inner) writeResources() error {
+	// TODO maybe actually handle the errors
+
+	i.writeJsonFile("resources", "json", i.resources)
+	i.writeJsonFile(i.addDetailedPostfixTo("resources"), "json", i.resources)
+	i.writeJsonFile(i.addBuildNumberPostfixTo("resources"), "json", i.resources)
 
 	return nil
 }
