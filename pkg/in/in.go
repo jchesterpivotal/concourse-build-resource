@@ -172,7 +172,7 @@ func (i *inner) getBuild() error {
 }
 
 func (i *inner) writeBuild() error {
-	return i.writeJsonFile("build", "json", i.build)
+	return i.writeJsonFile("build", i.build)
 }
 
 func (i *inner) getResources() error {
@@ -190,7 +190,7 @@ func (i *inner) getResources() error {
 }
 
 func (i *inner) writeResources() error {
-	return i.writeJsonFile("resources", "json", i.resources)
+	return i.writeJsonFile("resources", i.resources)
 }
 
 func (i *inner) getPlan() error {
@@ -208,7 +208,7 @@ func (i *inner) getPlan() error {
 }
 
 func (i *inner) writePlan() error {
-	return i.writeJsonFile("plan", "json", i.plan)
+	return i.writeJsonFile("plan", i.plan)
 }
 
 func (i *inner) getJob() error {
@@ -232,7 +232,7 @@ func (i *inner) getJob() error {
 }
 
 func (i *inner) writeJob() error {
-	return i.writeJsonFile("job", "json", i.job)
+	return i.writeJsonFile("job", i.job)
 }
 
 func (i *inner) writeConvenienceKeyValueFiles() error {
@@ -310,7 +310,7 @@ func (i *inner) addBuildNumberPostfixTo(name string) string {
 	return fmt.Sprintf("%s_%s", name, i.inRequest.Version.BuildId)
 }
 
-func (i *inner) writeJsonFile(filename string, extension string, object interface{}) error {
+func (i *inner) writeJsonFile(filename string, object interface{}) error {
 	builder := &strings.Builder{}
 
 	err := json.NewEncoder(builder).Encode(object)
@@ -329,19 +329,19 @@ func (i *inner) writeJsonFile(filename string, extension string, object interfac
 	jsonStr := builder.String()
 	jsonStr = strings.Replace(jsonStr, "{", getMetadataStr, 1)
 
-	unadornedJsonPath := filepath.Join(i.inRequest.WorkingDirectory, fmt.Sprintf("%s.%s", filename, extension))
+	unadornedJsonPath := filepath.Join(i.inRequest.WorkingDirectory, fmt.Sprintf("%s.json", filename))
 	err = ioutil.WriteFile(unadornedJsonPath, []byte(jsonStr), os.ModePerm)
 	if err != nil {
 		return err
 	}
 
-	detailedJsonPath := filepath.Join(i.inRequest.WorkingDirectory, fmt.Sprintf("%s.%s", i.addDetailedPostfixTo(filename), extension))
+	detailedJsonPath := filepath.Join(i.inRequest.WorkingDirectory, fmt.Sprintf("%s.json", i.addDetailedPostfixTo(filename)))
 	_, err = fileutils.CopyFile(unadornedJsonPath, detailedJsonPath)
 	if err != nil {
 		return err
 	}
 
-	numberedJsonPath := filepath.Join(i.inRequest.WorkingDirectory, fmt.Sprintf("%s.%s", i.addBuildNumberPostfixTo(filename), extension))
+	numberedJsonPath := filepath.Join(i.inRequest.WorkingDirectory, fmt.Sprintf("%s.json", i.addBuildNumberPostfixTo(filename)))
 	_, err = fileutils.CopyFile(unadornedJsonPath, numberedJsonPath)
 	if err != nil {
 		return err
