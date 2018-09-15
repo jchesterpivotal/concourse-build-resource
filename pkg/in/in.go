@@ -30,7 +30,8 @@ type inner struct {
 	concourseInfo   atc.Info
 	build           atc.Build
 	resources       atc.BuildInputsOutputs
-	plan 			atc.PublicBuildPlan
+	plan            atc.PublicBuildPlan
+	job             atc.Job
 	buildId         int
 }
 
@@ -82,25 +83,16 @@ func (i inner) In() (*config.InResponse, error) {
 		return nil, err
 	}
 
-
 	// job
-	// if the concourse team was blank in source, we need to replace here based on the build response.
-	if i.inRequest.Source.Team == "" {
-		i.concourseTeam = i.concourseClient.Team(i.build.TeamName)
-	}
-
-	// use build information as team, pipeline and job names might not have been provided in source
-	job, found, err := i.concourseTeam.Job(i.build.PipelineName, i.build.JobName)
+	err = i.getJob()
 	if err != nil {
-		return nil, fmt.Errorf("error while fetching job information for pipeline/job '%s/%s': %s", i.build.PipelineName, i.build.JobName, err.Error())
-	}
-	if !found {
-		return nil, fmt.Errorf("pipeline/job '%s/%s' not found while fetching pipeline/job information", i.build.PipelineName, i.build.JobName)
+		return nil, err
 	}
 
-	i.writeJsonFile("job", "json", job)
-	i.writeJsonFile(i.addDetailedPostfixTo("job"), "json", job)
-	i.writeJsonFile(i.addBuildNumberPostfixTo("job"), "json", job)
+	err = i.writeJob()
+	if err != nil {
+		return nil, err
+	}
 
 	// events
 	err = i.renderEventsRepetitively()
@@ -247,6 +239,36 @@ func (i *inner) writePlan() error {
 	i.writeJsonFile("plan", "json", i.plan)
 	i.writeJsonFile(i.addDetailedPostfixTo("plan"), "json", i.plan)
 	i.writeJsonFile(i.addBuildNumberPostfixTo("plan"), "json", i.plan)
+
+	return nil
+}
+
+func (i *inner) getJob() error {
+	// if the concourse team was blank in source, we need to replace here based on the build response.
+	if i.inRequest.Source.Team == "" {
+		i.concourseTeam = i.concourseClient.Team(i.build.TeamName)
+	}
+
+	// use build information as team, pipeline and job names might not have been provided in source
+	var err error
+	var found bool
+	i.job, found, err = i.concourseTeam.Job(i.build.PipelineName, i.build.JobName)
+	if err != nil {
+		return fmt.Errorf("error while fetching job information for pipeline/job '%s/%s': %s", i.build.PipelineName, i.build.JobName, err.Error())
+	}
+	if !found {
+		return fmt.Errorf("pipeline/job '%s/%s' not found while fetching pipeline/job information", i.build.PipelineName, i.build.JobName)
+	}
+
+	return nil
+}
+
+func (i *inner) writeJob() error {
+	// TODO maybe actually handle the errors
+
+	i.writeJsonFile("job", "json", i.job)
+	i.writeJsonFile(i.addDetailedPostfixTo("job"), "json", i.job)
+	i.writeJsonFile(i.addBuildNumberPostfixTo("job"), "json", i.job)
 
 	return nil
 }
