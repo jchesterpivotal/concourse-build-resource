@@ -101,25 +101,10 @@ func (i inner) In() (*config.InResponse, error) {
 	}
 
 	// K-V convenience files
-
-	i.writeStringFile("team", i.build.TeamName)
-	i.writeStringFile("pipeline", i.build.PipelineName)
-	i.writeStringFile("job", i.build.JobName)
-	i.writeStringFile("global_number", strconv.Itoa(i.build.ID))
-	i.writeStringFile("job_number", i.build.Name)
-	i.writeStringFile("started_time", strconv.Itoa(int(i.build.StartTime)))
-	i.writeStringFile("ended_time", strconv.Itoa(int(i.build.EndTime)))
-	i.writeStringFile("status", i.build.Status)
-	i.writeStringFile("concourse_url", i.concourseUrl())
-	i.writeStringFile("team_url", i.teamUrl())
-	i.writeStringFile("pipeline_url", i.pipelineUrl())
-	i.writeStringFile("job_url", i.jobUrl())
-	i.writeStringFile("build_url", i.buildUrl())
-	i.writeStringFile("concourse_build_resource_release", i.inRequest.ReleaseVersion)
-	i.writeStringFile("concourse_build_resource_git_ref", i.inRequest.ReleaseGitRef)
-	i.writeStringFile("concourse_build_resource_get_timestamp", strconv.Itoa(int(i.inRequest.GetTimestamp)))
-	i.writeStringFile("concourse_build_resource_get_uuid", i.inRequest.GetUuid)
-	i.writeStringFile("concourse_version", i.concourseInfo.Version)
+	err = i.writeConvenienceKeyValueFiles()
+	if err != nil {
+		return nil, err
+	}
 
 	return &config.InResponse{
 		Version: i.inRequest.Version,
@@ -269,6 +254,31 @@ func (i *inner) writeJob() error {
 	i.writeJsonFile("job", "json", i.job)
 	i.writeJsonFile(i.addDetailedPostfixTo("job"), "json", i.job)
 	i.writeJsonFile(i.addBuildNumberPostfixTo("job"), "json", i.job)
+
+	return nil
+}
+
+func (i *inner) writeConvenienceKeyValueFiles() error {
+	// TODO maybe actually handle the errors
+
+	i.writeStringFile("team", i.build.TeamName)
+	i.writeStringFile("pipeline", i.build.PipelineName)
+	i.writeStringFile("job", i.build.JobName)
+	i.writeStringFile("global_number", strconv.Itoa(i.build.ID))
+	i.writeStringFile("job_number", i.build.Name)
+	i.writeStringFile("started_time", strconv.Itoa(int(i.build.StartTime)))
+	i.writeStringFile("ended_time", strconv.Itoa(int(i.build.EndTime)))
+	i.writeStringFile("status", i.build.Status)
+	i.writeStringFile("concourse_url", i.concourseUrl())
+	i.writeStringFile("team_url", i.teamUrl())
+	i.writeStringFile("pipeline_url", i.pipelineUrl())
+	i.writeStringFile("job_url", i.jobUrl())
+	i.writeStringFile("build_url", i.buildUrl())
+	i.writeStringFile("concourse_build_resource_release", i.inRequest.ReleaseVersion)
+	i.writeStringFile("concourse_build_resource_git_ref", i.inRequest.ReleaseGitRef)
+	i.writeStringFile("concourse_build_resource_get_timestamp", strconv.Itoa(int(i.inRequest.GetTimestamp)))
+	i.writeStringFile("concourse_build_resource_get_uuid", i.inRequest.GetUuid)
+	i.writeStringFile("concourse_version", i.concourseInfo.Version)
 
 	return nil
 }
