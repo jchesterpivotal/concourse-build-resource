@@ -182,7 +182,9 @@ func (i *inner) getBuildId() error {
 }
 
 func (i *inner) getBuild() error {
-	fetchedBuild, found, err := i.concourseClient.Build(i.inRequest.Version.BuildId)
+	var err error
+	var found bool
+	i.build, found, err = i.concourseClient.Build(i.inRequest.Version.BuildId)
 	if err != nil {
 		return fmt.Errorf("error while fetching build '%s': '%s", i.inRequest.Version.BuildId, err.Error())
 	}
@@ -190,7 +192,6 @@ func (i *inner) getBuild() error {
 		return fmt.Errorf("server could not find '%s/%s' while retrieving build '%s'", i.inRequest.Source.Pipeline, i.inRequest.Source.Job, i.inRequest.Version.BuildId)
 	}
 
-	i.build = fetchedBuild
 	return nil
 }
 
