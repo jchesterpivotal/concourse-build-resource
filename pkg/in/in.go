@@ -29,6 +29,8 @@ type inner struct {
 	concourseTeam   gc.Team
 	concourseInfo   atc.Info
 	build           atc.Build
+	resources       atc.BuildInputsOutputs
+	buildId         int
 }
 
 func (i inner) In() (*config.InResponse, error) {
@@ -36,15 +38,14 @@ func (i inner) In() (*config.InResponse, error) {
 		log.Printf("Received InRequest: %+v", i.inRequest)
 	}
 
-	var err error
-	i.concourseInfo, err = i.concourseClient.GetInfo()
+	err := i.getConcourseInfo()
 	if err != nil {
-		return nil, fmt.Errorf("could not get Concourse server information: %s", err.Error())
+		return nil, err
 	}
 
-	buildId, err := strconv.Atoi(i.inRequest.Version.BuildId)
+	err = i.getBuildId()
 	if err != nil {
-		return nil, fmt.Errorf("could not convert build id '%s' to an int: '%s", i.inRequest.Version.BuildId, err.Error())
+		return nil, err
 	}
 
 	// the build
@@ -59,7 +60,7 @@ func (i inner) In() (*config.InResponse, error) {
 	}
 
 	// resources
-	resources, found, err := i.concourseClient.BuildResources(buildId)
+	resources, found, err := i.concourseClient.BuildResources(i.buildId)
 	if err != nil {
 		return nil, fmt.Errorf("error while fetching resources for build '%s': '%s", i.inRequest.Version.BuildId, err.Error())
 	}
@@ -72,7 +73,7 @@ func (i inner) In() (*config.InResponse, error) {
 	i.writeJsonFile(i.addBuildNumberPostfixTo("resources"), "json", resources)
 
 	// plan
-	plan, found, err := i.concourseClient.BuildPlan(buildId)
+	plan, found, err := i.concourseClient.BuildPlan(i.buildId)
 	if err != nil {
 		return nil, fmt.Errorf("error while fetching plan for build '%s': '%s", i.inRequest.Version.BuildId, err.Error())
 	}
@@ -158,6 +159,26 @@ func NewInnerUsingClient(input *config.InRequest, client gc.Client) Inner {
 		concourseClient: client,
 		concourseTeam:   client.Team(input.Source.Team),
 	}
+}
+
+func (i *inner) getConcourseInfo() error {
+	var err error
+	i.concourseInfo, err = i.concourseClient.GetInfo()
+	if err != nil {
+		return fmt.Errorf("could not get Concourse server information: %s", err.Error())
+	}
+
+	return nil
+}
+
+func (i *inner) getBuildId() error {
+	var err error
+	i.buildId, err = strconv.Atoi(i.inRequest.Version.BuildId)
+	if err != nil {
+		return fmt.Errorf("could not convert build id '%s' to an int: '%s", i.inRequest.Version.BuildId, err.Error())
+	}
+
+	return nil
 }
 
 func (i *inner) getBuild() error {
