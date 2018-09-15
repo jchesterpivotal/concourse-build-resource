@@ -4,6 +4,7 @@ require (
 	code.cloudfoundry.org/lager v1.1.0 // indirect
 	github.com/Masterminds/squirrel v0.0.0-20180815162352-8a7e65843414 // indirect
 	github.com/Microsoft/go-winio v0.4.11 // indirect
+	github.com/Sirupsen/logrus v1.0.6 // indirect
 	github.com/TylerBrock/colorjson v0.0.0-20180527164720-95ec53f28296
 	github.com/aryann/difflib v0.0.0-20170710044230-e206f873d14a // indirect
 	github.com/bmatcuk/doublestar v1.1.1 // indirect
@@ -24,7 +25,7 @@ require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible // indirect
 	github.com/docker/distribution v2.6.2+incompatible
-	github.com/docker/docker v1.13.1 // indirect
+	github.com/docker/docker v1.13.1
 	github.com/docker/go-connections v0.4.0 // indirect
 	github.com/docker/go-units v0.3.3 // indirect
 	github.com/fatih/color v1.7.0 // indirect

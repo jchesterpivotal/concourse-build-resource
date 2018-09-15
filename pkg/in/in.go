@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"github.com/concourse/atc"
 	"github.com/concourse/fly/eventstream"
+	"github.com/docker/docker/pkg/fileutils"
 	"github.com/jchesterpivotal/concourse-build-resource/pkg/config"
 	"io/ioutil"
 	"log"
@@ -95,7 +96,7 @@ func (i inner) In() (*config.InResponse, error) {
 	}
 
 	// events
-	err = i.renderEventsRepetitively()
+	err = i.writeEventsLog()
 	if err != nil {
 		return nil, err
 	}
@@ -174,8 +175,6 @@ func (i *inner) writeBuild() error {
 	// TODO maybe actually handle the errors
 
 	i.writeJsonFile("build", "json", i.build)
-	i.writeJsonFile(i.addDetailedPostfixTo("build"), "json", i.build)
-	i.writeJsonFile(i.addBuildNumberPostfixTo("build"), "json", i.build)
 
 	return nil
 }
@@ -198,8 +197,6 @@ func (i *inner) writeResources() error {
 	// TODO maybe actually handle the errors
 
 	i.writeJsonFile("resources", "json", i.resources)
-	i.writeJsonFile(i.addDetailedPostfixTo("resources"), "json", i.resources)
-	i.writeJsonFile(i.addBuildNumberPostfixTo("resources"), "json", i.resources)
 
 	return nil
 }
@@ -222,8 +219,6 @@ func (i *inner) writePlan() error {
 	// TODO maybe actually handle the errors
 
 	i.writeJsonFile("plan", "json", i.plan)
-	i.writeJsonFile(i.addDetailedPostfixTo("plan"), "json", i.plan)
-	i.writeJsonFile(i.addBuildNumberPostfixTo("plan"), "json", i.plan)
 
 	return nil
 }
@@ -252,8 +247,6 @@ func (i *inner) writeJob() error {
 	// TODO maybe actually handle the errors
 
 	i.writeJsonFile("job", "json", i.job)
-	i.writeJsonFile(i.addDetailedPostfixTo("job"), "json", i.job)
-	i.writeJsonFile(i.addBuildNumberPostfixTo("job"), "json", i.job)
 
 	return nil
 }
@@ -352,8 +345,20 @@ func (i *inner) writeJsonFile(filename string, extension string, object interfac
 	jsonStr := builder.String()
 	jsonStr = strings.Replace(jsonStr, "{", getMetadataStr, 1)
 
-	unadornedFilePath := fmt.Sprintf("%s.%s", filename, extension)
-	err = ioutil.WriteFile(filepath.Join(i.inRequest.WorkingDirectory, unadornedFilePath), []byte(jsonStr), os.ModePerm)
+	unadornedJsonPath := filepath.Join(i.inRequest.WorkingDirectory, fmt.Sprintf("%s.%s", filename, extension))
+	err = ioutil.WriteFile(unadornedJsonPath, []byte(jsonStr), os.ModePerm)
+	if err != nil {
+		return err
+	}
+
+	detailedJsonPath := filepath.Join(i.inRequest.WorkingDirectory, fmt.Sprintf("%s.%s", i.addDetailedPostfixTo(filename), extension))
+	_, err = fileutils.CopyFile(unadornedJsonPath, detailedJsonPath)
+	if err != nil {
+		return err
+	}
+
+	numberedJsonPath := filepath.Join(i.inRequest.WorkingDirectory, fmt.Sprintf("%s.%s", i.addBuildNumberPostfixTo(filename), extension))
+	_, err = fileutils.CopyFile(unadornedJsonPath, numberedJsonPath)
 	if err != nil {
 		return err
 	}
@@ -373,7 +378,7 @@ func (i *inner) writeStringFile(filename string, value string) error {
 	return err
 }
 
-func (i *inner) renderEventsRepetitively() error {
+func (i *inner) writeEventsLog() error {
 	events, err := i.concourseClient.BuildEvents(i.inRequest.Version.BuildId)
 	// first, check if we are even authorised
 	if err != nil && err.Error() == "not authorized" {
@@ -385,38 +390,25 @@ func (i *inner) renderEventsRepetitively() error {
 	}
 	defer events.Close()
 
-	eventsFile, err := os.Create(filepath.Join(i.inRequest.WorkingDirectory, "events.log"))
+	unadornedLogPath := filepath.Join(i.inRequest.WorkingDirectory, "events.log")
+	eventsFile, err := os.Create(unadornedLogPath)
 	if err != nil {
 		return err
 	}
-	defer eventsFile.Close()
 	eventstream.Render(eventsFile, events)
+	eventsFile.Close()
 
-	eventsDetailPostfixed, err := i.concourseClient.BuildEvents(i.inRequest.Version.BuildId)
-	if err != nil {
-		return fmt.Errorf("error while fetching events for build '%s': '%s", i.inRequest.Version.BuildId, err.Error())
-	}
-	defer eventsDetailPostfixed.Close()
-
-	eventsFileDetailPostfixed, err := os.Create(filepath.Join(i.inRequest.WorkingDirectory, fmt.Sprintf("%s.log", i.addDetailedPostfixTo("events"))))
+	detailedLogPath := filepath.Join(i.inRequest.WorkingDirectory, fmt.Sprintf("%s.log", i.addDetailedPostfixTo("events")))
+	_, err = fileutils.CopyFile(unadornedLogPath, detailedLogPath)
 	if err != nil {
 		return err
 	}
-	defer eventsFileDetailPostfixed.Close()
-	eventstream.Render(eventsFileDetailPostfixed, eventsDetailPostfixed)
 
-	eventsBuildPostfixed, err := i.concourseClient.BuildEvents(i.inRequest.Version.BuildId)
-	if err != nil {
-		return fmt.Errorf("error while fetching events for build '%s': '%s", i.inRequest.Version.BuildId, err.Error())
-	}
-	defer eventsBuildPostfixed.Close()
-
-	eventsFileBuildPostfixed, err := os.Create(filepath.Join(i.inRequest.WorkingDirectory, fmt.Sprintf("%s.log", i.addBuildNumberPostfixTo("events"))))
+	numberedLogPath := filepath.Join(i.inRequest.WorkingDirectory, fmt.Sprintf("%s.log", i.addBuildNumberPostfixTo("events")))
+	_, err = fileutils.CopyFile(unadornedLogPath, numberedLogPath)
 	if err != nil {
 		return err
 	}
-	defer eventsFileBuildPostfixed.Close()
-	eventstream.Render(eventsFileBuildPostfixed, eventsBuildPostfixed)
 
 	return nil
 }
