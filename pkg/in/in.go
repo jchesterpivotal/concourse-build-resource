@@ -48,19 +48,15 @@ func (i inner) In() (*config.InResponse, error) {
 	}
 
 	// the build
-	fetchedBuild, found, err := i.concourseClient.Build(i.inRequest.Version.BuildId)
+	err = i.getBuild()
 	if err != nil {
-		return nil, fmt.Errorf("error while fetching build '%s': '%s", i.inRequest.Version.BuildId, err.Error())
-	}
-	if !found {
-		return nil, fmt.Errorf("server could not find '%s/%s' while retrieving build '%s'", i.inRequest.Source.Pipeline, i.inRequest.Source.Job, i.inRequest.Version.BuildId)
+		return nil, err
 	}
 
-	i.build = fetchedBuild
-
-	i.writeJsonFile("build", "json", i.build)
-	i.writeJsonFile(i.addDetailedPostfixTo("build"), "json", i.build)
-	i.writeJsonFile(i.addBuildNumberPostfixTo("build"), "json", i.build)
+	err = i.writeBuild()
+	if err != nil {
+		return nil, err
+	}
 
 	// resources
 	resources, found, err := i.concourseClient.BuildResources(buildId)
@@ -164,11 +160,34 @@ func NewInnerUsingClient(input *config.InRequest, client gc.Client) Inner {
 	}
 }
 
-func (i inner) concourseUrl() string {
+func (i *inner) getBuild() error {
+	fetchedBuild, found, err := i.concourseClient.Build(i.inRequest.Version.BuildId)
+	if err != nil {
+		return fmt.Errorf("error while fetching build '%s': '%s", i.inRequest.Version.BuildId, err.Error())
+	}
+	if !found {
+		return fmt.Errorf("server could not find '%s/%s' while retrieving build '%s'", i.inRequest.Source.Pipeline, i.inRequest.Source.Job, i.inRequest.Version.BuildId)
+	}
+
+	i.build = fetchedBuild
+	return nil
+}
+
+func (i *inner) writeBuild() error {
+	// TODO maybe actually handle the errors,
+
+	i.writeJsonFile("build", "json", i.build)
+	i.writeJsonFile(i.addDetailedPostfixTo("build"), "json", i.build)
+	i.writeJsonFile(i.addBuildNumberPostfixTo("build"), "json", i.build)
+
+	return nil
+}
+
+func (i *inner) concourseUrl() string {
 	return i.inRequest.Source.ConcourseUrl
 }
 
-func (i inner) teamUrl() string {
+func (i *inner) teamUrl() string {
 	return fmt.Sprintf(
 		"%s/teams/%s",
 		i.concourseUrl(),
@@ -176,7 +195,7 @@ func (i inner) teamUrl() string {
 	)
 }
 
-func (i inner) pipelineUrl() string {
+func (i *inner) pipelineUrl() string {
 	return fmt.Sprintf(
 		"%s/pipelines/%s",
 		i.teamUrl(),
@@ -184,7 +203,7 @@ func (i inner) pipelineUrl() string {
 	)
 }
 
-func (i inner) jobUrl() string {
+func (i *inner) jobUrl() string {
 	return fmt.Sprintf(
 		"%s/jobs/%s",
 		i.pipelineUrl(),
@@ -192,7 +211,7 @@ func (i inner) jobUrl() string {
 	)
 }
 
-func (i inner) buildUrl() string {
+func (i *inner) buildUrl() string {
 	return fmt.Sprintf(
 		"%s/builds/%s",
 		i.jobUrl(),
@@ -200,7 +219,7 @@ func (i inner) buildUrl() string {
 	)
 }
 
-func (i inner) addDetailedPostfixTo(name string, ) string {
+func (i *inner) addDetailedPostfixTo(name string, ) string {
 	return fmt.Sprintf(
 		"%s_%s_%s_%s_%s",
 		name,
@@ -210,11 +229,11 @@ func (i inner) addDetailedPostfixTo(name string, ) string {
 		i.build.Name)
 }
 
-func (i inner) addBuildNumberPostfixTo(name string) string {
+func (i *inner) addBuildNumberPostfixTo(name string) string {
 	return fmt.Sprintf("%s_%s", name, i.inRequest.Version.BuildId)
 }
 
-func (i inner) writeJsonFile(filename string, extension string, object interface{}) error {
+func (i *inner) writeJsonFile(filename string, extension string, object interface{}) error {
 	builder := &strings.Builder{}
 
 	err := json.NewEncoder(builder).Encode(object)
@@ -242,7 +261,7 @@ func (i inner) writeJsonFile(filename string, extension string, object interface
 	return nil
 }
 
-func (i inner) writeStringFile(filename string, value string) error {
+func (i *inner) writeStringFile(filename string, value string) error {
 	file, err := os.Create(filepath.Join(i.inRequest.WorkingDirectory, filename))
 	defer file.Close()
 	if err != nil {
@@ -254,7 +273,7 @@ func (i inner) writeStringFile(filename string, value string) error {
 	return err
 }
 
-func (i inner) renderEventsRepetitively() error {
+func (i *inner) renderEventsRepetitively() error {
 	events, err := i.concourseClient.BuildEvents(i.inRequest.Version.BuildId)
 	// first, check if we are even authorised
 	if err != nil && err.Error() == "not authorized" {
