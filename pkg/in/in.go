@@ -172,11 +172,7 @@ func (i *inner) getBuild() error {
 }
 
 func (i *inner) writeBuild() error {
-	// TODO maybe actually handle the errors
-
-	i.writeJsonFile("build", "json", i.build)
-
-	return nil
+	return i.writeJsonFile("build", "json", i.build)
 }
 
 func (i *inner) getResources() error {
@@ -194,11 +190,7 @@ func (i *inner) getResources() error {
 }
 
 func (i *inner) writeResources() error {
-	// TODO maybe actually handle the errors
-
-	i.writeJsonFile("resources", "json", i.resources)
-
-	return nil
+	return i.writeJsonFile("resources", "json", i.resources)
 }
 
 func (i *inner) getPlan() error {
@@ -216,11 +208,7 @@ func (i *inner) getPlan() error {
 }
 
 func (i *inner) writePlan() error {
-	// TODO maybe actually handle the errors
-
-	i.writeJsonFile("plan", "json", i.plan)
-
-	return nil
+	return i.writeJsonFile("plan", "json", i.plan)
 }
 
 func (i *inner) getJob() error {
@@ -244,11 +232,7 @@ func (i *inner) getJob() error {
 }
 
 func (i *inner) writeJob() error {
-	// TODO maybe actually handle the errors
-
-	i.writeJsonFile("job", "json", i.job)
-
-	return nil
+	return i.writeJsonFile("job", "json", i.job)
 }
 
 func (i *inner) writeConvenienceKeyValueFiles() error {
