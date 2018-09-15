@@ -57,7 +57,7 @@ func (i inner) In() (*config.InResponse, error) {
 		return nil, err
 	}
 
-	err = i.writeBuild()
+	err = i.writeJsonFile("build", i.build)
 	if err != nil {
 		return nil, err
 	}
@@ -68,7 +68,7 @@ func (i inner) In() (*config.InResponse, error) {
 		return nil, err
 	}
 
-	err = i.writeResources()
+	err = i.writeJsonFile("resources", i.resources)
 	if err != nil {
 		return nil, err
 	}
@@ -79,7 +79,7 @@ func (i inner) In() (*config.InResponse, error) {
 		return nil, err
 	}
 
-	err = i.writePlan()
+	err = i.writeJsonFile("plan", i.plan)
 	if err != nil {
 		return nil, err
 	}
@@ -90,7 +90,7 @@ func (i inner) In() (*config.InResponse, error) {
 		return nil, err
 	}
 
-	err = i.writeJob()
+	err = i.writeJsonFile("job", i.job)
 	if err != nil {
 		return nil, err
 	}
@@ -171,10 +171,6 @@ func (i *inner) getBuild() error {
 	return nil
 }
 
-func (i *inner) writeBuild() error {
-	return i.writeJsonFile("build", i.build)
-}
-
 func (i *inner) getResources() error {
 	var err error
 	var found bool
@@ -189,10 +185,6 @@ func (i *inner) getResources() error {
 	return nil
 }
 
-func (i *inner) writeResources() error {
-	return i.writeJsonFile("resources", i.resources)
-}
-
 func (i *inner) getPlan() error {
 	var err error
 	var found bool
@@ -205,10 +197,6 @@ func (i *inner) getPlan() error {
 	}
 
 	return nil
-}
-
-func (i *inner) writePlan() error {
-	return i.writeJsonFile("plan", i.plan)
 }
 
 func (i *inner) getJob() error {
@@ -231,8 +219,39 @@ func (i *inner) getJob() error {
 	return nil
 }
 
-func (i *inner) writeJob() error {
-	return i.writeJsonFile("job", i.job)
+func (i *inner) writeEventsLog() error {
+	events, err := i.concourseClient.BuildEvents(i.inRequest.Version.BuildId)
+	// first, check if we are even authorised
+	if err != nil && err.Error() == "not authorized" {
+		log.Printf("was unauthorized to fetch events for build '%s', no logs will be written.", i.inRequest.Version.BuildId)
+		return nil
+	}
+	if err != nil {
+		return fmt.Errorf("error while fetching events for build '%s': '%s", i.inRequest.Version.BuildId, err.Error())
+	}
+	defer events.Close()
+
+	unadornedLogPath := filepath.Join(i.inRequest.WorkingDirectory, "events.log")
+	eventsFile, err := os.Create(unadornedLogPath)
+	if err != nil {
+		return err
+	}
+	eventstream.Render(eventsFile, events)
+	eventsFile.Close()
+
+	detailedLogPath := filepath.Join(i.inRequest.WorkingDirectory, fmt.Sprintf("%s.log", i.addDetailedPostfixTo("events")))
+	_, err = fileutils.CopyFile(unadornedLogPath, detailedLogPath)
+	if err != nil {
+		return err
+	}
+
+	numberedLogPath := filepath.Join(i.inRequest.WorkingDirectory, fmt.Sprintf("%s.log", i.addBuildNumberPostfixTo("events")))
+	_, err = fileutils.CopyFile(unadornedLogPath, numberedLogPath)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (i *inner) writeConvenienceKeyValueFiles() error {
@@ -360,39 +379,4 @@ func (i *inner) writeStringFile(filename string, value string) error {
 	_, err = file.WriteString(value)
 
 	return err
-}
-
-func (i *inner) writeEventsLog() error {
-	events, err := i.concourseClient.BuildEvents(i.inRequest.Version.BuildId)
-	// first, check if we are even authorised
-	if err != nil && err.Error() == "not authorized" {
-		log.Printf("was unauthorized to fetch events for build '%s', no logs will be written.", i.inRequest.Version.BuildId)
-		return nil
-	}
-	if err != nil {
-		return fmt.Errorf("error while fetching events for build '%s': '%s", i.inRequest.Version.BuildId, err.Error())
-	}
-	defer events.Close()
-
-	unadornedLogPath := filepath.Join(i.inRequest.WorkingDirectory, "events.log")
-	eventsFile, err := os.Create(unadornedLogPath)
-	if err != nil {
-		return err
-	}
-	eventstream.Render(eventsFile, events)
-	eventsFile.Close()
-
-	detailedLogPath := filepath.Join(i.inRequest.WorkingDirectory, fmt.Sprintf("%s.log", i.addDetailedPostfixTo("events")))
-	_, err = fileutils.CopyFile(unadornedLogPath, detailedLogPath)
-	if err != nil {
-		return err
-	}
-
-	numberedLogPath := filepath.Join(i.inRequest.WorkingDirectory, fmt.Sprintf("%s.log", i.addBuildNumberPostfixTo("events")))
-	_, err = fileutils.CopyFile(unadornedLogPath, numberedLogPath)
-	if err != nil {
-		return err
-	}
-
-	return nil
 }
