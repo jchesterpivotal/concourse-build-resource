@@ -28,6 +28,7 @@ type inner struct {
 	concourseClient gc.Client
 	concourseTeam   gc.Team
 	concourseInfo   atc.Info
+	build           atc.Build
 }
 
 func (i inner) In() (*config.InResponse, error) {
@@ -47,7 +48,7 @@ func (i inner) In() (*config.InResponse, error) {
 	}
 
 	// the build
-	build, found, err := i.concourseClient.Build(i.inRequest.Version.BuildId)
+	fetchedBuild, found, err := i.concourseClient.Build(i.inRequest.Version.BuildId)
 	if err != nil {
 		return nil, fmt.Errorf("error while fetching build '%s': '%s", i.inRequest.Version.BuildId, err.Error())
 	}
@@ -55,9 +56,11 @@ func (i inner) In() (*config.InResponse, error) {
 		return nil, fmt.Errorf("server could not find '%s/%s' while retrieving build '%s'", i.inRequest.Source.Pipeline, i.inRequest.Source.Job, i.inRequest.Version.BuildId)
 	}
 
-	i.writeJsonFile("build", "json", build)
-	i.writeJsonFile(i.addDetailedPostfixTo("build", build), "json", build)
-	i.writeJsonFile(i.addBuildNumberPostfixTo("build"), "json", build)
+	i.build = fetchedBuild
+
+	i.writeJsonFile("build", "json", i.build)
+	i.writeJsonFile(i.addDetailedPostfixTo("build"), "json", i.build)
+	i.writeJsonFile(i.addBuildNumberPostfixTo("build"), "json", i.build)
 
 	// resources
 	resources, found, err := i.concourseClient.BuildResources(buildId)
@@ -69,7 +72,7 @@ func (i inner) In() (*config.InResponse, error) {
 	}
 
 	i.writeJsonFile("resources", "json", resources)
-	i.writeJsonFile(i.addDetailedPostfixTo("resources", build), "json", resources)
+	i.writeJsonFile(i.addDetailedPostfixTo("resources"), "json", resources)
 	i.writeJsonFile(i.addBuildNumberPostfixTo("resources"), "json", resources)
 
 	// plan
@@ -82,49 +85,49 @@ func (i inner) In() (*config.InResponse, error) {
 	}
 
 	i.writeJsonFile("plan", "json", plan)
-	i.writeJsonFile(i.addDetailedPostfixTo("plan", build), "json", plan)
+	i.writeJsonFile(i.addDetailedPostfixTo("plan"), "json", plan)
 	i.writeJsonFile(i.addBuildNumberPostfixTo("plan"), "json", plan)
 
 	// job
 	// if the concourse team was blank in source, we need to replace here based on the build response.
 	if i.inRequest.Source.Team == "" {
-		i.concourseTeam = i.concourseClient.Team(build.TeamName)
+		i.concourseTeam = i.concourseClient.Team(i.build.TeamName)
 	}
 
 	// use build information as team, pipeline and job names might not have been provided in source
-	job, found, err := i.concourseTeam.Job(build.PipelineName, build.JobName)
+	job, found, err := i.concourseTeam.Job(i.build.PipelineName, i.build.JobName)
 	if err != nil {
-		return nil, fmt.Errorf("error while fetching job information for pipeline/job '%s/%s': %s", build.PipelineName, build.JobName, err.Error())
+		return nil, fmt.Errorf("error while fetching job information for pipeline/job '%s/%s': %s", i.build.PipelineName, i.build.JobName, err.Error())
 	}
 	if !found {
-		return nil, fmt.Errorf("pipeline/job '%s/%s' not found while fetching pipeline/job information", build.PipelineName, build.JobName)
+		return nil, fmt.Errorf("pipeline/job '%s/%s' not found while fetching pipeline/job information", i.build.PipelineName, i.build.JobName)
 	}
 
 	i.writeJsonFile("job", "json", job)
-	i.writeJsonFile(i.addDetailedPostfixTo("job", build), "json", job)
+	i.writeJsonFile(i.addDetailedPostfixTo("job"), "json", job)
 	i.writeJsonFile(i.addBuildNumberPostfixTo("job"), "json", job)
 
 	// events
-	err = i.renderEventsRepetitively(build)
+	err = i.renderEventsRepetitively()
 	if err != nil {
 		return nil, err
 	}
 
 	// K-V convenience files
 
-	i.writeStringFile("team", build.TeamName)
-	i.writeStringFile("pipeline", build.PipelineName)
-	i.writeStringFile("job", build.JobName)
-	i.writeStringFile("global_number", strconv.Itoa(build.ID))
-	i.writeStringFile("job_number", build.Name)
-	i.writeStringFile("started_time", strconv.Itoa(int(build.StartTime)))
-	i.writeStringFile("ended_time", strconv.Itoa(int(build.EndTime)))
-	i.writeStringFile("status", build.Status)
-	i.writeStringFile("concourse_url", i.concourseUrl(build))
-	i.writeStringFile("team_url", i.teamUrl(build))
-	i.writeStringFile("pipeline_url", i.pipelineUrl(build))
-	i.writeStringFile("job_url", i.jobUrl(build))
-	i.writeStringFile("build_url", i.buildUrl(build))
+	i.writeStringFile("team", i.build.TeamName)
+	i.writeStringFile("pipeline", i.build.PipelineName)
+	i.writeStringFile("job", i.build.JobName)
+	i.writeStringFile("global_number", strconv.Itoa(i.build.ID))
+	i.writeStringFile("job_number", i.build.Name)
+	i.writeStringFile("started_time", strconv.Itoa(int(i.build.StartTime)))
+	i.writeStringFile("ended_time", strconv.Itoa(int(i.build.EndTime)))
+	i.writeStringFile("status", i.build.Status)
+	i.writeStringFile("concourse_url", i.concourseUrl())
+	i.writeStringFile("team_url", i.teamUrl())
+	i.writeStringFile("pipeline_url", i.pipelineUrl())
+	i.writeStringFile("job_url", i.jobUrl())
+	i.writeStringFile("build_url", i.buildUrl())
 	i.writeStringFile("concourse_build_resource_release", i.inRequest.ReleaseVersion)
 	i.writeStringFile("concourse_build_resource_git_ref", i.inRequest.ReleaseGitRef)
 	i.writeStringFile("concourse_build_resource_get_timestamp", strconv.Itoa(int(i.inRequest.GetTimestamp)))
@@ -134,7 +137,7 @@ func (i inner) In() (*config.InResponse, error) {
 	return &config.InResponse{
 		Version: i.inRequest.Version,
 		Metadata: []config.VersionMetadataField{
-			{Name: "build_url", Value: i.buildUrl(build)},
+			{Name: "build_url", Value: i.buildUrl()},
 		},
 	}, nil
 }
@@ -161,50 +164,50 @@ func NewInnerUsingClient(input *config.InRequest, client gc.Client) Inner {
 	}
 }
 
-func (i inner) concourseUrl(build atc.Build) string {
+func (i inner) concourseUrl() string {
 	return i.inRequest.Source.ConcourseUrl
 }
 
-func (i inner) teamUrl(build atc.Build) string {
+func (i inner) teamUrl() string {
 	return fmt.Sprintf(
 		"%s/teams/%s",
-		i.concourseUrl(build),
-		build.TeamName,
+		i.concourseUrl(),
+		i.build.TeamName,
 	)
 }
 
-func (i inner) pipelineUrl(build atc.Build) string {
+func (i inner) pipelineUrl() string {
 	return fmt.Sprintf(
 		"%s/pipelines/%s",
-		i.teamUrl(build),
-		build.PipelineName,
+		i.teamUrl(),
+		i.build.PipelineName,
 	)
 }
 
-func (i inner) jobUrl(build atc.Build) string {
+func (i inner) jobUrl() string {
 	return fmt.Sprintf(
 		"%s/jobs/%s",
-		i.pipelineUrl(build),
-		build.JobName,
+		i.pipelineUrl(),
+		i.build.JobName,
 	)
 }
 
-func (i inner) buildUrl(build atc.Build) string {
+func (i inner) buildUrl() string {
 	return fmt.Sprintf(
 		"%s/builds/%s",
-		i.jobUrl(build),
-		build.Name,
+		i.jobUrl(),
+		i.build.Name,
 	)
 }
 
-func (i inner) addDetailedPostfixTo(name string, build atc.Build) string {
+func (i inner) addDetailedPostfixTo(name string, ) string {
 	return fmt.Sprintf(
 		"%s_%s_%s_%s_%s",
 		name,
-		build.TeamName,
-		build.PipelineName,
-		build.JobName,
-		build.Name)
+		i.build.TeamName,
+		i.build.PipelineName,
+		i.build.JobName,
+		i.build.Name)
 }
 
 func (i inner) addBuildNumberPostfixTo(name string) string {
@@ -230,7 +233,8 @@ func (i inner) writeJsonFile(filename string, extension string, object interface
 	jsonStr := builder.String()
 	jsonStr = strings.Replace(jsonStr, "{", getMetadataStr, 1)
 
-	err = ioutil.WriteFile(filepath.Join(i.inRequest.WorkingDirectory, fmt.Sprintf("%s.%s", filename, extension)), []byte(jsonStr), os.ModePerm)
+	unadornedFilePath := fmt.Sprintf("%s.%s", filename, extension)
+	err = ioutil.WriteFile(filepath.Join(i.inRequest.WorkingDirectory, unadornedFilePath), []byte(jsonStr), os.ModePerm)
 	if err != nil {
 		return err
 	}
@@ -250,7 +254,7 @@ func (i inner) writeStringFile(filename string, value string) error {
 	return err
 }
 
-func (i inner) renderEventsRepetitively(build atc.Build) error {
+func (i inner) renderEventsRepetitively() error {
 	events, err := i.concourseClient.BuildEvents(i.inRequest.Version.BuildId)
 	// first, check if we are even authorised
 	if err != nil && err.Error() == "not authorized" {
@@ -275,7 +279,7 @@ func (i inner) renderEventsRepetitively(build atc.Build) error {
 	}
 	defer eventsDetailPostfixed.Close()
 
-	eventsFileDetailPostfixed, err := os.Create(filepath.Join(i.inRequest.WorkingDirectory, fmt.Sprintf("%s.log", i.addDetailedPostfixTo("events", build))))
+	eventsFileDetailPostfixed, err := os.Create(filepath.Join(i.inRequest.WorkingDirectory, fmt.Sprintf("%s.log", i.addDetailedPostfixTo("events"))))
 	if err != nil {
 		return err
 	}
