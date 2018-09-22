@@ -12,7 +12,7 @@ If you are reading the document on master, you will often see features described
 Typically this means that they won't work in your pipeline if you are using `latest`, as I control release tags
 fairly tightly.
 
-[The latest release is `v0.9.1`](https://github.com/jchesterpivotal/concourse-build-resource/releases/tag/v0.9.1). See [the release README](https://github.com/jchesterpivotal/concourse-build-resource/tree/v0.9.1/README.md)
+[The latest release is `v0.10.0`](https://github.com/jchesterpivotal/concourse-build-resource/releases/tag/v0.10.0). See [the release README](https://github.com/jchesterpivotal/concourse-build-resource/tree/v0.10.0/README.md)
 for features you can expect to see in production.
 
 ## source
@@ -149,7 +149,7 @@ resource_types:
   check_every: 30m
   source:
     repository: jchesterpivotal/concourse-build-resource
-    tag: v0.9.1 # check https://github.com/jchesterpivotal/concourse-build-resource/releases
+    tag: v0.10.0 # check https://github.com/jchesterpivotal/concourse-build-resource/releases
 
 resources:
 - name: build
@@ -166,7 +166,7 @@ resources:
   type: git
   source:
     uri: https://github.com/jchesterpivotal/concourse-build-resource.git
-    tag: v0.9.1 # check https://github.com/jchesterpivotal/concourse-build-resource/releases
+    tag: v0.10.0 # check https://github.com/jchesterpivotal/concourse-build-resource/releases
 
 jobs:
 # ....
