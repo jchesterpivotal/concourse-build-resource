@@ -47,6 +47,8 @@ Will produce a number of files in the resource directory.
 * `resources.json`: the resource versions that were involved in `get`s or `put`s
 * `plan.json`: the plan of the Job
 * `job.json`: the Job structure
+* `versioned_resource_types.json`: information about non-core resource types used in the build. This covers things
+   added to a pipeline using `resource_types:`, but not core resources like `git-resource`.
 * `events.log`: the logs from the Job.
 
 ### The original resources with information encoded in the filename
