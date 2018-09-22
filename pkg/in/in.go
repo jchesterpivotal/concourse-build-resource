@@ -25,15 +25,16 @@ type Inner interface {
 	In() (*config.InResponse, error)
 }
 type inner struct {
-	inRequest       *config.InRequest
-	concourseClient gc.Client
-	concourseTeam   gc.Team
-	concourseInfo   atc.Info
-	build           atc.Build
-	resources       atc.BuildInputsOutputs
-	plan            atc.PublicBuildPlan
-	job             atc.Job
-	buildId         int
+	inRequest              *config.InRequest
+	concourseClient        gc.Client
+	concourseTeam          gc.Team
+	concourseInfo          atc.Info
+	build                  atc.Build
+	resources              atc.BuildInputsOutputs
+	plan                   atc.PublicBuildPlan
+	job                    atc.Job
+	versionedResourceTypes atc.VersionedResourceTypes
+	buildId                int
 }
 
 func (i inner) In() (*config.InResponse, error) {
@@ -91,6 +92,17 @@ func (i inner) In() (*config.InResponse, error) {
 	}
 
 	err = i.writeJsonFile("job", i.job)
+	if err != nil {
+		return nil, err
+	}
+
+	// versioned resource types
+	err = i.getVersionedResourceTypes()
+	if err != nil {
+		return nil, err
+	}
+
+	err = i.writeJsonFile("versioned_resource_types", i.versionedResourceTypes)
 	if err != nil {
 		return nil, err
 	}
@@ -214,6 +226,20 @@ func (i *inner) getJob() error {
 	}
 	if !found {
 		return fmt.Errorf("pipeline/job '%s/%s' not found while fetching pipeline/job information", i.build.PipelineName, i.build.JobName)
+	}
+
+	return nil
+}
+
+func (i *inner) getVersionedResourceTypes() error {
+	var err error
+	var found bool
+	i.versionedResourceTypes, found, err = i.concourseTeam.VersionedResourceTypes(i.build.PipelineName)
+	if err != nil {
+		return fmt.Errorf("error while fetching versioned resource type information for pipeline '%s': %s", i.build.PipelineName, err.Error())
+	}
+	if !found {
+		return fmt.Errorf("pipeline '%s' not found while fetching versioned resource type information", i.build.PipelineName)
 	}
 
 	return nil

@@ -65,15 +65,19 @@ func TestInCmd(t *testing.T) {
 						w.Header().Set("Content-Type", "application/json")
 						json.NewEncoder(w).Encode(atc.PublicBuildPlan{})
 					}))
-					server.RouteToHandler("GET", "/api/v1/builds/111/events", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-						w.Header().Set("Content-Type", "application/json")
-						io.WriteString(w, "id: 0\nevent: end\ndata")
-					}))
 					server.RouteToHandler("GET", "/api/v1/teams/t/pipelines/p/jobs/j", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 						w.Header().Set("Content-Type", "application/json")
 						json.NewEncoder(w).Encode(atc.Job{})
 						json.NewEncoder(w).Encode(atc.JobConfigs{})
 						json.NewEncoder(w).Encode(atc.JobConfig{})
+					}))
+					server.RouteToHandler("GET", "/api/v1/teams/t/pipelines/p/resource-types",  http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+						w.Header().Set("Content-Type", "application/json")
+						json.NewEncoder(w).Encode(atc.VersionedResourceTypes{{ResourceType: atc.ResourceType{CheckEvery: "10m"}}})
+					}))
+					server.RouteToHandler("GET", "/api/v1/builds/111/events", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+						w.Header().Set("Content-Type", "application/json")
+						io.WriteString(w, "id: 0\nevent: end\ndata")
 					}))
 
 					cmd := exec.Command(compiledPath, "build")
@@ -130,6 +134,10 @@ func TestInCmd(t *testing.T) {
 					server.RouteToHandler("GET", "/api/v1/teams/t/pipelines/p/jobs/j", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 						w.Header().Set("Content-Type", "application/json")
 						json.NewEncoder(w).Encode(atc.Job{})
+					}))
+					server.RouteToHandler("GET", "/api/v1/teams/t/pipelines/p/resource-types",  http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+						w.Header().Set("Content-Type", "application/json")
+						json.NewEncoder(w).Encode(atc.VersionedResourceTypes{{ResourceType: atc.ResourceType{CheckEvery: "10m"}}})
 					}))
 					server.RouteToHandler("GET", "/api/v1/builds/111/events", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 						w.Header().Set("Content-Type", "application/json")

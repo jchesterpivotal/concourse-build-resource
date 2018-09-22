@@ -64,6 +64,7 @@ func TestInPkg(t *testing.T) {
 					}, true, nil)
 					fakeclient.BuildPlanReturns(atc.PublicBuildPlan{}, true, nil)
 					faketeam.JobReturns(atc.Job{}, true, nil)
+					faketeam.VersionedResourceTypesReturns(atc.VersionedResourceTypes{{ResourceType: atc.ResourceType{CheckEvery: "10m"}}}, true, nil)
 					fakeeventstream.NextEventReturns(nil, io.EOF)
 					fakeclient.BuildEventsReturns(fakeeventstream, nil)
 
@@ -142,6 +143,18 @@ func TestInPkg(t *testing.T) {
 
 				it("writes out the job_<team>_<pipeline>_<job>_<build number>.json file", func() {
 					gt.Expect(AFileExistsContaining("build/job_team_pipeline_job_111.json", `"finished_build":`, gt)).To(gomega.BeTrue())
+				})
+
+				it("writes out the versioned_resource_types.json file", func() {
+					gt.Expect(AFileExistsContaining("build/versioned_resource_types.json", `"check_every":`, gt)).To(gomega.BeTrue())
+				})
+
+				it("writes out the versioned_resource_types_<global build number>.json file", func() {
+					gt.Expect(AFileExistsContaining("build/versioned_resource_types_999.json", `"check_every":`, gt)).To(gomega.BeTrue())
+				})
+
+				it("writes out the versioned_resource_types_<team>_<pipeline>_<job>_<build number>.json file", func() {
+					gt.Expect(AFileExistsContaining("build/versioned_resource_types_team_pipeline_job_111.json", `"check_every":`, gt)).To(gomega.BeTrue())
 				})
 
 				it("adds resource version metadata to JSON files", func() {
@@ -266,6 +279,7 @@ func TestInPkg(t *testing.T) {
 						TeamName:      "team",
 						FinishedBuild: &atc.Build{},
 					}, true, nil)
+					faketeam.VersionedResourceTypesReturns(atc.VersionedResourceTypes{{ResourceType: atc.ResourceType{CheckEvery: "10m"}}}, true, nil)
 					fakeeventstream.NextEventReturns(nil, io.EOF)
 					fakeclient.BuildEventsReturns(fakeeventstream, nil)
 
@@ -319,6 +333,7 @@ func TestInPkg(t *testing.T) {
 					fakeclient.BuildResourcesReturns(atc.BuildInputsOutputs{}, true, nil)
 					fakeclient.BuildPlanReturns(atc.PublicBuildPlan{}, true, nil)
 					faketeam.JobReturns(atc.Job{}, true, nil)
+					faketeam.VersionedResourceTypesReturns(atc.VersionedResourceTypes{{ResourceType: atc.ResourceType{CheckEvery: "10m"}}}, true, nil)
 					fakeeventstream.NextEventReturns(nil, io.EOF)
 					fakeclient.BuildEventsReturns(fakeeventstream, nil)
 
@@ -351,6 +366,7 @@ func TestInPkg(t *testing.T) {
 					fakeclient.BuildResourcesReturns(atc.BuildInputsOutputs{}, true, nil)
 					fakeclient.BuildPlanReturns(atc.PublicBuildPlan{}, true, nil)
 					faketeam.JobReturns(atc.Job{}, true, nil)
+					faketeam.VersionedResourceTypesReturns(atc.VersionedResourceTypes{{ResourceType: atc.ResourceType{CheckEvery: "10m"}}}, true, nil)
 					fakeeventstream.NextEventReturns(nil, io.EOF)
 					fakeclient.BuildEventsReturns(fakeeventstream, nil)
 
