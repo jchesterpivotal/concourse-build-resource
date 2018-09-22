@@ -24,6 +24,11 @@ import (
 type Inner interface {
 	In() (*config.InResponse, error)
 }
+
+type versionedResourceTypesWrapper struct {
+	VersionedResourceTypes atc.VersionedResourceTypes `json:"versioned_resource_types"`
+}
+
 type inner struct {
 	inRequest              *config.InRequest
 	concourseClient        gc.Client
@@ -33,7 +38,7 @@ type inner struct {
 	resources              atc.BuildInputsOutputs
 	plan                   atc.PublicBuildPlan
 	job                    atc.Job
-	versionedResourceTypes atc.VersionedResourceTypes
+	versionedResourceTypes versionedResourceTypesWrapper
 	buildId                int
 }
 
@@ -234,13 +239,15 @@ func (i *inner) getJob() error {
 func (i *inner) getVersionedResourceTypes() error {
 	var err error
 	var found bool
-	i.versionedResourceTypes, found, err = i.concourseTeam.VersionedResourceTypes(i.build.PipelineName)
+	verResTypes, found, err := i.concourseTeam.VersionedResourceTypes(i.build.PipelineName)
 	if err != nil {
 		return fmt.Errorf("error while fetching versioned resource type information for pipeline '%s': %s", i.build.PipelineName, err.Error())
 	}
 	if !found {
 		return fmt.Errorf("pipeline '%s' not found while fetching versioned resource type information", i.build.PipelineName)
 	}
+
+	i.versionedResourceTypes = versionedResourceTypesWrapper{VersionedResourceTypes: verResTypes}
 
 	return nil
 }
