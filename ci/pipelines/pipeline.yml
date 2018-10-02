@@ -12,10 +12,6 @@ resources: #####################################################################
       value: Jacques Chester
     - name: user.email
       value: jchester+githubrobot@pivotal.io
-    ignore_paths:
-    - README.md
-    - tasks/*
-    - ci/pipelines/*
 
 - name: release-image
   type: docker-image
@@ -74,31 +70,12 @@ jobs: ##########################################################################
       tag_as_latest: false
       tag_prefix: v
 
-- name: begin-patch-release
+- name: begin-release
   public: true
   plan:
-  - put: release-version
-    params: { bump: patch }
-
-- name: begin-minor-release
-  public: true
-  plan:
-  - put: release-version
-    params: { bump: minor }
-
-- name: throttle-releases
-  public: true
-  serial_groups: [build-and-release]
-  plan:
-  - aggregate:
-    - get: triggered-by-minor-bump
-      resource: release-version
-      trigger: true
-      passed: [begin-minor-release]
-    - get: triggered-by-patch-bump
-      resource: release-version
-      trigger: true
-      passed: [begin-patch-release]
+    - put: release-version
+      params:
+        bump: final
 
 - name: build-image-release
   public: true
@@ -110,7 +87,7 @@ jobs: ##########################################################################
     - get: release-version
       trigger: true
       version: every
-      passed: [throttle-releases]
+      passed: [begin-release]
   - task: build-binaries
     file: concourse-build-resource-repo/ci/tasks/build/task.yml
     input_mapping: { version: release-version }
@@ -134,7 +111,6 @@ jobs: ##########################################################################
       passed: [build-image-release]
     - get: release-image
       passed: [build-image-release]
-
 
   - task: update-tags-in-files
     file: concourse-build-resource-repo/ci/tasks/update-tags/task.yml
