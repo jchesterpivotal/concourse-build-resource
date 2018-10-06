@@ -6,6 +6,7 @@ import (
 	"github.com/concourse/fly/eventstream"
 	"github.com/docker/docker/pkg/fileutils"
 	"github.com/jchesterpivotal/concourse-build-resource/pkg/config"
+	"io"
 	"io/ioutil"
 	"log"
 	"strings"
@@ -113,7 +114,7 @@ func (i inner) In() (*config.InResponse, error) {
 	}
 
 	// events
-	err = i.writeEventsLog()
+	err = i.writeEventsLogAndJson()
 	if err != nil {
 		return nil, err
 	}
@@ -252,8 +253,13 @@ func (i *inner) getVersionedResourceTypes() error {
 	return nil
 }
 
-func (i *inner) writeEventsLog() error {
-	events, err := i.concourseClient.BuildEvents(i.inRequest.Version.BuildId)
+// This method is gross because it needs to fetch events twice: once for the .log, once for the .json.
+// This has to do with the clever way events are handled by Concourse and also to do with my unwillingness
+// to completely and properly tease apart a smarter way to do this.
+func (i *inner) writeEventsLogAndJson() error {
+	//////////////////////// Rendered log ////////////////////////
+
+	eventsForLogFile, err := i.concourseClient.BuildEvents(i.inRequest.Version.BuildId)
 	// first, check if we are even authorised
 	if err != nil && err.Error() == "not authorized" {
 		log.Printf("was unauthorized to fetch events for build '%s', no logs will be written.", i.inRequest.Version.BuildId)
@@ -262,15 +268,16 @@ func (i *inner) writeEventsLog() error {
 	if err != nil {
 		return fmt.Errorf("error while fetching events for build '%s': '%s", i.inRequest.Version.BuildId, err.Error())
 	}
-	defer events.Close()
+	defer eventsForLogFile.Close()
 
 	unadornedLogPath := filepath.Join(i.inRequest.WorkingDirectory, "events.log")
-	eventsFile, err := os.Create(unadornedLogPath)
+	eventsLogFile, err := os.Create(unadornedLogPath)
 	if err != nil {
 		return err
 	}
-	eventstream.Render(eventsFile, events)
-	eventsFile.Close()
+
+	eventstream.Render(eventsLogFile, eventsForLogFile)
+	eventsLogFile.Close()
 
 	detailedLogPath := filepath.Join(i.inRequest.WorkingDirectory, fmt.Sprintf("%s.log", i.addDetailedPostfixTo("events")))
 	_, err = fileutils.CopyFile(unadornedLogPath, detailedLogPath)
@@ -280,6 +287,47 @@ func (i *inner) writeEventsLog() error {
 
 	numberedLogPath := filepath.Join(i.inRequest.WorkingDirectory, fmt.Sprintf("%s.log", i.addBuildNumberPostfixTo("events")))
 	_, err = fileutils.CopyFile(unadornedLogPath, numberedLogPath)
+	if err != nil {
+		return err
+	}
+
+	//////////////////////// JSON ////////////////////////
+
+	eventsForJsonFile, err := i.concourseClient.BuildEvents(i.inRequest.Version.BuildId)
+	defer eventsForJsonFile.Close()
+
+	jsonBuilder := &strings.Builder{}
+	jsonEnc := json.NewEncoder(jsonBuilder)
+	for {
+		ev, err := eventsForJsonFile.NextEvent()
+		if err != nil {
+			if err == io.EOF {
+				break
+			}
+			return err
+		}
+
+		err = jsonEnc.Encode(ev)
+		if err != nil {
+			return err
+		}
+		jsonBuilder.WriteString(",")
+	}
+	jsonStr := fmt.Sprintf("[%s]", strings.TrimSuffix(jsonBuilder.String(), ","))
+	unadornedJsonPath := filepath.Join(i.inRequest.WorkingDirectory, "events.json")
+	err = ioutil.WriteFile(unadornedJsonPath, []byte(jsonStr), os.ModePerm)
+	if err != nil {
+		return err
+	}
+
+	detailedJsonPath := filepath.Join(i.inRequest.WorkingDirectory, fmt.Sprintf("%s.json", i.addDetailedPostfixTo("events")))
+	_, err = fileutils.CopyFile(unadornedJsonPath, detailedJsonPath)
+	if err != nil {
+		return err
+	}
+
+	numberedJsonPath := filepath.Join(i.inRequest.WorkingDirectory, fmt.Sprintf("%s.json", i.addBuildNumberPostfixTo("events")))
+	_, err = fileutils.CopyFile(unadornedJsonPath, numberedJsonPath)
 	if err != nil {
 		return err
 	}

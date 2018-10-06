@@ -189,8 +189,24 @@ func TestInPkg(t *testing.T) {
 					gt.Expect("build/events.log").To(gomega.BeAnExistingFile())
 				})
 
+				it("writes out the events_999.log", func() {
+					gt.Expect("build/events_999.log").To(gomega.BeAnExistingFile())
+				})
+
 				it("writes out the events_<team>_<pipeline>_<job>_<build number>.log", func() {
 					gt.Expect("build/events_team_pipeline_job_111.log").To(gomega.BeAnExistingFile())
+				})
+
+				it("writes out the events.json", func() {
+					gt.Expect("build/events.json").To(gomega.BeAnExistingFile())
+				})
+
+				it("writes out the events_999.json", func() {
+					gt.Expect("build/events_999.json").To(gomega.BeAnExistingFile())
+				})
+
+				it("writes out the events_<team>_<pipeline>_<job>_<build number>.json", func() {
+					gt.Expect("build/events_team_pipeline_job_111.json").To(gomega.BeAnExistingFile())
 				})
 
 				it("writes out the events_<global build number>.log", func() {

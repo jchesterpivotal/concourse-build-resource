@@ -4,7 +4,11 @@ Sometimes you want to get build information and logs out of Concourse so you can
 
 This resource aims to make that as easy as possible.
 
-Authentication is _not_ supported currently. You will need to make all the jobs and pipelines you are following public, or it (essentially) won't work.
+Authentication is _not_ supported currently. In practice, this means:
+
+* If your pipeline is private, this resource will never see it or be able to fetch from it.
+* If your pipeline is public, but the jobs are not public, the resource will not be able to fetch
+  event logs. It will be able to fetch most other data, however.
 
 ### About this document
 
@@ -49,7 +53,10 @@ Will produce a number of files in the resource directory.
 * `job.json`: the Job structure
 * `versioned_resource_types.json`: information about non-core resource types used in the build. This covers things
    added to a pipeline using `resource_types:`, but not core resources like `git-resource`.
-* `events.log`: the logs from the Job.
+* `events.json`: an array of JSON objects from the Job, based on the eventstream sent to `fly` or the web UI.
+* `events.log`: the rendered logs from the Job, as they would appear in `fly` or the web UI.
+
+Use `events.log` if you just want to slurp text output.
 
 ### The original resources with information encoded in the filename
 
