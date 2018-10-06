@@ -30,8 +30,14 @@ type versionedResourceTypesWrapper struct {
 	VersionedResourceTypes atc.VersionedResourceTypes `json:"versioned_resource_types"`
 }
 
+type eventEnvelope struct {
+	Data    atc.Event        `json:"data"`
+	Event   atc.EventType    `json:"event"`
+	Version atc.EventVersion `json:"version"`
+}
+
 type eventsWrapper struct {
-	Events []atc.Event `json:"events"`
+	Events []eventEnvelope `json:"events"`
 }
 
 type inner struct {
@@ -286,7 +292,7 @@ func (i *inner) getEventsForJson() error {
 	}
 	defer eventsForJsonFile.Close()
 
-	eventsArr := make([]atc.Event, 0)
+	eventsArr := make([]eventEnvelope, 0)
 	for {
 		ev, err := eventsForJsonFile.NextEvent()
 		if err != nil {
@@ -296,7 +302,12 @@ func (i *inner) getEventsForJson() error {
 			return err
 		}
 
-		eventsArr = append(eventsArr, ev)
+		var builtEv eventEnvelope
+		builtEv.Data = ev
+		builtEv.Event = ev.EventType()
+		builtEv.Version = ev.Version()
+
+		eventsArr = append(eventsArr, builtEv)
 	}
 
 	i.events = eventsWrapper{Events: eventsArr}
