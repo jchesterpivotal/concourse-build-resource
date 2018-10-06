@@ -30,6 +30,10 @@ type versionedResourceTypesWrapper struct {
 	VersionedResourceTypes atc.VersionedResourceTypes `json:"versioned_resource_types"`
 }
 
+type eventsWrapper struct {
+	Events []atc.Event `json:"events"`
+}
+
 type inner struct {
 	inRequest              *config.InRequest
 	concourseClient        gc.Client
@@ -40,6 +44,7 @@ type inner struct {
 	plan                   atc.PublicBuildPlan
 	job                    atc.Job
 	versionedResourceTypes versionedResourceTypesWrapper
+	events                 eventsWrapper
 	buildId                int
 }
 
@@ -113,8 +118,25 @@ func (i inner) In() (*config.InResponse, error) {
 		return nil, err
 	}
 
-	// events
-	err = i.writeEventsLogAndJson()
+	// Events need to be fetched twice: once for the .json, once for the .log.
+	// The json follows the same basic logic as other endpoints. The log file however
+	// requires me to use a Concourse package to render it. This has clever EOFing
+	// stuff that I don't feel comfortable trying to reverse engineer, hence the
+	// double-handling of events.
+
+	// events part 1: JSON
+	err = i.getEventsForJson()
+	if err != nil {
+		return nil, err
+	}
+
+	err = i.writeJsonFile("events", i.events)
+	if err != nil {
+		return nil, err
+	}
+
+	// events part 2: rendering to pretty text
+	err = i.getAndWriteRenderedEventLog()
 	if err != nil {
 		return nil, err
 	}
@@ -253,12 +275,36 @@ func (i *inner) getVersionedResourceTypes() error {
 	return nil
 }
 
-// This method is gross because it needs to fetch events twice: once for the .log, once for the .json.
-// This has to do with the clever way events are handled by Concourse and also to do with my unwillingness
-// to completely and properly tease apart a smarter way to do this.
-func (i *inner) writeEventsLogAndJson() error {
-	//////////////////////// Rendered log ////////////////////////
+func (i *inner) getEventsForJson() error {
+	eventsForJsonFile, err := i.concourseClient.BuildEvents(i.inRequest.Version.BuildId)
+	if err != nil && err.Error() == "not authorized" {
+		log.Printf("was unauthorized to fetch events for build '%s', no event JSON will be written.", i.inRequest.Version.BuildId)
+		return nil
+	}
+	if err != nil {
+		return fmt.Errorf("error while fetching events for build '%s': '%s", i.inRequest.Version.BuildId, err.Error())
+	}
+	defer eventsForJsonFile.Close()
 
+	eventsArr := make([]atc.Event, 0)
+	for {
+		ev, err := eventsForJsonFile.NextEvent()
+		if err != nil {
+			if err == io.EOF {
+				break
+			}
+			return err
+		}
+
+		eventsArr = append(eventsArr, ev)
+	}
+
+	i.events = eventsWrapper{Events: eventsArr}
+
+	return nil
+}
+
+func (i *inner) getAndWriteRenderedEventLog() error {
 	eventsForLogFile, err := i.concourseClient.BuildEvents(i.inRequest.Version.BuildId)
 	// first, check if we are even authorised
 	if err != nil && err.Error() == "not authorized" {
@@ -287,47 +333,6 @@ func (i *inner) writeEventsLogAndJson() error {
 
 	numberedLogPath := filepath.Join(i.inRequest.WorkingDirectory, fmt.Sprintf("%s.log", i.addBuildNumberPostfixTo("events")))
 	_, err = fileutils.CopyFile(unadornedLogPath, numberedLogPath)
-	if err != nil {
-		return err
-	}
-
-	//////////////////////// JSON ////////////////////////
-
-	eventsForJsonFile, err := i.concourseClient.BuildEvents(i.inRequest.Version.BuildId)
-	defer eventsForJsonFile.Close()
-
-	jsonBuilder := &strings.Builder{}
-	jsonEnc := json.NewEncoder(jsonBuilder)
-	for {
-		ev, err := eventsForJsonFile.NextEvent()
-		if err != nil {
-			if err == io.EOF {
-				break
-			}
-			return err
-		}
-
-		err = jsonEnc.Encode(ev)
-		if err != nil {
-			return err
-		}
-		jsonBuilder.WriteString(",")
-	}
-	jsonStr := fmt.Sprintf("[%s]", strings.TrimSuffix(jsonBuilder.String(), ","))
-	unadornedJsonPath := filepath.Join(i.inRequest.WorkingDirectory, "events.json")
-	err = ioutil.WriteFile(unadornedJsonPath, []byte(jsonStr), os.ModePerm)
-	if err != nil {
-		return err
-	}
-
-	detailedJsonPath := filepath.Join(i.inRequest.WorkingDirectory, fmt.Sprintf("%s.json", i.addDetailedPostfixTo("events")))
-	_, err = fileutils.CopyFile(unadornedJsonPath, detailedJsonPath)
-	if err != nil {
-		return err
-	}
-
-	numberedJsonPath := filepath.Join(i.inRequest.WorkingDirectory, fmt.Sprintf("%s.json", i.addBuildNumberPostfixTo("events")))
-	_, err = fileutils.CopyFile(unadornedJsonPath, numberedJsonPath)
 	if err != nil {
 		return err
 	}

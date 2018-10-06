@@ -162,6 +162,7 @@ func TestInPkg(t *testing.T) {
 					gt.Expect(AFileExistsContaining("build/plan.json", `"concourse_build_resource":{"release":"v0.99.11","git_ref":"abcdef1234567890","get_timestamp":1234567890,"concourse_version":"3.99.11","get_uuid":"96d7128f-bacf-4f60-9ffd-1a9ca4c9e1d7"},`, gt)).To(gomega.BeTrue())
 					gt.Expect(AFileExistsContaining("build/resources.json", `"concourse_build_resource":{"release":"v0.99.11","git_ref":"abcdef1234567890","get_timestamp":1234567890,"concourse_version":"3.99.11","get_uuid":"96d7128f-bacf-4f60-9ffd-1a9ca4c9e1d7"},`, gt)).To(gomega.BeTrue())
 					gt.Expect(AFileExistsContaining("build/job.json", `"concourse_build_resource":{"release":"v0.99.11","git_ref":"abcdef1234567890","get_timestamp":1234567890,"concourse_version":"3.99.11","get_uuid":"96d7128f-bacf-4f60-9ffd-1a9ca4c9e1d7"},`, gt)).To(gomega.BeTrue())
+					gt.Expect(AFileExistsContaining("build/events.json", `"concourse_build_resource":{"release":"v0.99.11","git_ref":"abcdef1234567890","get_timestamp":1234567890,"concourse_version":"3.99.11","get_uuid":"96d7128f-bacf-4f60-9ffd-1a9ca4c9e1d7"},`, gt)).To(gomega.BeTrue())
 				})
 
 				it("writes out a concourse_build_resource_release file", func() {

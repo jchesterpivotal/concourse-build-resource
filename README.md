@@ -53,10 +53,12 @@ Will produce a number of files in the resource directory.
 * `job.json`: the Job structure
 * `versioned_resource_types.json`: information about non-core resource types used in the build. This covers things
    added to a pipeline using `resource_types:`, but not core resources like `git-resource`.
-* `events.json`: an array of JSON objects from the Job, based on the eventstream sent to `fly` or the web UI.
+* `events.json`: contains an array of JSON objects based on the eventstream sent to `fly` or the web UI.
 * `events.log`: the rendered logs from the Job, as they would appear in `fly` or the web UI.
 
-Use `events.log` if you just want to slurp text output.
+Use `events.log` if you just want to slurp text output. The `events.json` file is not a literal transcription of
+the eventstream. Instead an object is constructed containing an array of event objects, as well as injected
+metadata.
 
 ### The original resources with information encoded in the filename
 
