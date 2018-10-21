@@ -10,6 +10,8 @@ Authentication is _not_ supported currently. In practice, this means:
 * If your pipeline is public, but the jobs are not public, the resource will not be able to fetch
   event logs. It will be able to fetch most other data, however.
 
+**This software is not commercially supported by Pivotal**. It's my own side-project.
+
 ### About this document
 
 If you are reading the document on master, you will often see features described that are not in a release version.
